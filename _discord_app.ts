@@ -19,51 +19,73 @@ export function createDiscordApp(options: DiscordAppOptions): DiscordApp {
 }
 
 /**
+ * DiscordAppOptions are the options to create a new DiscordApp instance.
+ */
+export type DiscordAppOptions =
+  & Omit<RESTPostAPIApplicationCommandsJSONBody, "options">
+  & (
+    | ChatInputAppOptions
+    | UserAppOptions
+    | MessageAppOptions
+  );
+
+/**
+ * ChatInputAppOptions is an options bag for a slash command.
+ */
+export type ChatInputAppOptions =
+  & {
+    /**
+     * type is the type of the slash command. In this case, it is always
+     * ApplicationCommandType.ChatInput.
+     */
+    type?: ApplicationCommandType.ChatInput;
+
+    /**
+     * description is the description of the slash command.
+     */
+    description: string;
+  }
+  & (
+    | ChatInputAppOptionsEnvelope
+    | ChatInputAppSubcommandsEnvelope
+    | ChatInputAppGroupsEnvelope
+  );
+
+/**
  * ChatInputAppOptionsEnvelope is an basic slash command options descriptor.
  */
 export interface ChatInputAppOptionsEnvelope {
   options: {
-    [optionName: string]: Omit<APIApplicationCommandBasicOption, "name">;
+    [optionName: string]: Omit<
+      APIApplicationCommandBasicOption,
+      "name"
+    >;
   };
 }
 
 /**
  * DiscordAppHandler is a Discord application command interaction handler.
  */
-// export type DiscordAppHandler<
-//   A extends DiscordAppOptions,
-// > = A extends ChatInputAppOptionsEnvelope ? (
-//     A extends ChatInputAppGroupsEnvelope ? (
-//       (interaction: InteractionOf<A>,
-//         options: OptionsMapOf<GroupedSubcommandOptionsOf<A, any, any>>
-//       ) => Promise<InteractionResult>
-//   )
-//   : (interaction: InteractionOf<A>) => Promise<InteractionResult>;
-
-/**
- * SubcommandOptionsOf is a type that drills down to the options of a subcommand.
- */
-// export type SubcommandOptionsOf<
-//   E extends ChatInputAppSubcommandsEnvelope,
-//   SubcommandName extends keyof E["subcommands"],
-// > = E["subcommands"][SubcommandName];
-
-/**
- * GroupedSubcommandOptionsOf is a type that drills down to the options of a
- * subcommand of a subcommand group.
- */
-// export type GroupedSubcommandOptionsOf<
-//   E extends ChatInputAppGroupsEnvelope,
-//   GroupName extends keyof E["groups"],
-//   SubcommandName extends keyof E["groups"][GroupName]["subcommands"],
-// > = E["groups"][GroupName]["subcommands"][SubcommandName];
+export type DiscordAppHandler<
+  A extends DiscordAppOptions,
+  SubcommandName extends A extends
+    ChatInputAppSubcommandsEnvelope | ChatInputAppGroupsEnvelope ? string
+    : never,
+  GroupName extends A extends ChatInputAppGroupsEnvelope ? string : never,
+> = A extends ChatInputAppOptionsEnvelope ? (
+    (
+      interaction: InteractionOf<A>,
+      options: OptionsMapOf<OptionsEnvelopeOf<A, SubcommandName, GroupName>>,
+    ) => Promise<InteractionResult>
+  )
+  : (interaction: InteractionOf<A>) => Promise<InteractionResult>;
 
 /**
  * InteractionOf is a type that populates the interaction type with the given
  * options.
  */
 export type InteractionOf<
-  A extends { type?: ApplicationCommandType },
+  A extends DiscordAppOptions,
 > = APIInteraction & {
   type: A extends ChatInputAppOptions ? ApplicationCommandType.ChatInput
     : A extends UserAppOptions ? ApplicationCommandType.User
@@ -83,22 +105,26 @@ export type InteractionResult =
  * OptionsEnvelopeOf is a type that drills down to the options envelope of a
  * slash command, subcommand, or subcommand group.
  */
-export type OptionsEnvelopeOf<
+type OptionsEnvelopeOf<
   E extends
     | ChatInputAppOptionsEnvelope
     | ChatInputAppSubcommandsEnvelope
     | ChatInputAppGroupsEnvelope,
-  SubcommandName
-    extends (E extends ChatInputAppGroupsEnvelope
-      ? keyof E["groups"][GroupName]["subcommands"]
-      : E extends ChatInputAppSubcommandsEnvelope ? keyof E["subcommands"]
-      : never),
-  GroupName
-    extends (E extends ChatInputAppGroupsEnvelope ? keyof E["groups"] : never),
+  SubcommandName extends E extends
+    ChatInputAppSubcommandsEnvelope | ChatInputAppGroupsEnvelope ? string
+    : never,
+  GroupName extends E extends ChatInputAppGroupsEnvelope ? string : never,
 > = E extends ChatInputAppOptionsEnvelope ? E
-  : E extends ChatInputAppSubcommandsEnvelope ? E["subcommands"][SubcommandName]
+  : E extends ChatInputAppSubcommandsEnvelope
+    ? SubcommandName extends keyof E["subcommands"]
+      ? E["subcommands"][SubcommandName]
+    : never
   : E extends ChatInputAppGroupsEnvelope
-    ? E["groups"][GroupName]["subcommands"][SubcommandName]
+    ? GroupName extends keyof E["groups"]
+      ? SubcommandName extends keyof E["groups"][GroupName]["subcommands"]
+        ? E["groups"][GroupName]["subcommands"][SubcommandName]
+      : never
+    : never
   : never;
 
 /**
@@ -136,14 +162,23 @@ export type OptionTypeOf<
  * ChatInputAppSubcommandsEnvelope is an option descriptor for a slash command's
  * subcommands.
  */
-export interface ChatInputAppSubcommandsEnvelope {
+export interface ChatInputAppSubcommandsEnvelope<
+  SubcommandName extends string,
+> {
   subcommands: {
-    [subcommandName: string]:
+    [subcommandName in keyof SubcommandName]:
       & Omit<
         APIApplicationCommandSubcommandOption,
         "name" | "options" | "type"
       >
-      & ChatInputAppOptionsEnvelope;
+      & ChatInputAppOptionsEnvelope
+      & {
+        handle: DiscordAppHandler<
+          this,
+          SubcommandName,
+          never
+        >;
+      };
   };
 }
 
@@ -167,7 +202,6 @@ export interface ChatInputAppGroupsEnvelope {
  */
 export interface UserAppOptions {
   type: ApplicationCommandType.User;
-  action: (interaction: InteractionOf<this>) => Promise<InteractionResult>;
 }
 
 /**
@@ -176,7 +210,6 @@ export interface UserAppOptions {
  */
 export interface MessageAppOptions {
   type: ApplicationCommandType.Message;
-  action: (interaction: InteractionOf<this>) => Promise<InteractionResult>;
 }
 
 /**
