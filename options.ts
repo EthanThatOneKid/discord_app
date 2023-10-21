@@ -11,19 +11,43 @@ import {
 } from "./deps.ts";
 
 export type ChatInputAppOptions =
-  & RESTPostAPIChatInputApplicationCommandsJSONBody
-  & (
-    | OptionsCollection
-    | SubcommandsCollection
-    | GroupsCollection
-  );
+ & RESTPostAPIChatInputApplicationCommandsJSONBody
+& (
+  ChatInputAppOptionsWithOptionsHandler
+  ChatInputAppOptionsWithSubcommandsHandler
+  ChatInputAppOptionsWithGroupsHandler
+);
+
+/**
+ * OptionKey is the structure to identify an option.
+ */
+// export interface OptionKey<
+//   G extends string | undefined = undefined|string,
+//   S extends string | undefined = undefined|string,
+//   O extends string = string,
+// > {
+//   /**
+//    * group is the name of the group the option belongs to.
+//    */
+//   group?: G;
+
+//   /**
+//    * subcommand is the name of the subcommand the option belongs to.
+//    */
+//   subcommand?: S;
+
+//   /**
+//    * option is the name of the option.
+//    */
+//   option: O;
+// }
 
 /**
  * OptionsCollection is an option descriptor for a slash command's options.
  */
-export interface OptionsCollection {
+export interface OptionsCollection{
   options: {
-    [optionName: string]: Omit<APIApplicationCommandBasicOption, "name">;
+    [optionName in string]: APIApplicationCommandBasicOption
   };
 }
 
@@ -33,13 +57,7 @@ export interface OptionsCollection {
  */
 export interface SubcommandsCollection {
   subcommands: {
-    [subcommandName: string]:
-      & Omit<
-        APIApplicationCommandSubcommandOption,
-        "name" | "options" | "type"
-      >
-      & OptionsCollection
-      & { action: any };
+    [subcommandName: string]:OptionsCollection;
   };
 }
 
@@ -49,14 +67,28 @@ export interface SubcommandsCollection {
  */
 export interface GroupsCollection {
   groups: {
-    [groupName: string]:
-      & Omit<
-        APIApplicationCommandSubcommandGroupOption,
-        "name" | "options" | "type"
-      >
-      & SubcommandsCollection;
+    [groupName: string]:SubcommandsCollection;
   };
 }
+
+export type HandlerMapOf<O extends OptionsCollection | SubcommandsCollection | GroupsCollection> =
+  O extends OptionsCollection ? OptionsHandlerMap
+  : O extends SubcommandsCollection ? SubcommandsHandlerMap
+  : O extends GroupsCollection ? GroupsHandlerMap
+  : never;
+
+export type OptionsHandlerMap  = (options: OptionsCollection['options']) => APIInteractionResponse;
+
+export type SubcommandsHandlerMap  = {
+  [subcommandName in keyof SubcommandsCollection['subcommands']]: (
+    options: SubcommandsCollection['subcommands'][subcommandName]['options'],
+  ) => APIInteractionResponse;
+};
+
+export type GroupsHandlerMap  = {
+  [groupName in keyof GroupsCollection['groups']]: SubcommandsHandlerMap;
+};
+
 
 const options: ChatInputAppOptions = {
   name: "permissions",
@@ -66,6 +98,12 @@ const options: ChatInputAppOptions = {
       description: "Get or edit permissions for a user",
       subcommands: {
         get: {
+          handle: (options) => {
+            return {
+              type: InteractionResponseType.ChannelMessageWithSource,
+              data: { content: "Hello world!" },
+            };
+          },
           description: "Get permissions for a user",
           options: {
             username: {
@@ -109,15 +147,15 @@ const _options: ChatInputAppOptions = {
       subcommands: {
         get: {
           description: "Get permissions for a user",
-          action: (
-            options: OptionsOf<typeof _options, "get", "user">,
-          ): APIInteractionResponse => {
-            console.log(options[''
-            return {
-              type: InteractionResponseType.ChannelMessageWithSource,
-              data: { content: "Hello world!" },
-            };
-          },
+          // action: (
+          //   options: OptionsOf<typeof _options, "get", "user">,
+          // ): APIInteractionResponse => {
+          //   // console.log(options['
+          //   return {
+          //     type: InteractionResponseType.ChannelMessageWithSource,
+          //     data: { content: "Hello world!" },
+          //   };
+          // },
           options: {
             username: {
               type: ApplicationCommandOptionType.User,
@@ -137,23 +175,47 @@ const _options: ChatInputAppOptions = {
 } as const;
 
 /**
+ * OptionsOfSubcommand returns the options of a slash command's subcommand.
+ */
+export type OptionsOfSubcommand<
+  O extends SubcommandsCollection,
+  S extends string,
+> = O extends SubcommandsCollection
+  ? S extends keyof O["subcommands"] ? O["subcommands"][S]
+  : never
+  : never;
+
+/**
+ * OptionsOfGroupedSubcommand returns the options of a slash command's grouped
+ * subcommand.
+ */
+export type OptionsOfGroupedSubcommand<
+  O extends GroupsCollection,
+  S extends string,
+  G extends string,
+> = O extends GroupsCollection
+  ? G extends keyof O["groups"] ? OptionsOfSubcommand<O["groups"][G], S>
+  : never
+  : never;
+
+/**
  * OptionsOf returns the options of a slash command.
  */
-export type OptionsOf<
-  O extends (OptionsCollection | SubcommandsCollection | GroupsCollection),
-  S extends (O extends SubcommandsCollection ? keyof O["subcommands"]
-    : O extends GroupsCollection
-      ? keyof O["groups"][keyof O["groups"]]["subcommands"]
-    : never),
-  G extends (O extends GroupsCollection ? keyof O["groups"] : never),
-> = O extends OptionsCollection ? O
-  : O extends SubcommandsCollection
-    ? S extends keyof O["subcommands"] ? O["subcommands"][S]
-    : never
-  : O extends GroupsCollection
-    ? G extends keyof O["groups"] ? O["groups"][G]["subcommands"][S]
-    : never
-  : never;
+// export type OptionsOf<
+//   O extends (OptionsCollection | SubcommandsCollection | GroupsCollection),
+//   S extends (O extends SubcommandsCollection ? keyof O["subcommands"]
+//     : O extends GroupsCollection
+//       ? keyof O["groups"][keyof O["groups"]]["subcommands"]
+//     : never),
+//   G extends (O extends GroupsCollection ? keyof O["groups"] : never),
+// > = O extends OptionsCollection ? O
+//   : O extends SubcommandsCollection
+//     ? S extends keyof O["subcommands"] ? O["subcommands"][S]
+//     : never
+//   : O extends GroupsCollection
+//     ? G extends keyof O["groups"] ? O["groups"][G]["subcommands"][S]
+//     : never
+//   : never;
 
 /**
  * OptionsMapOf is a type that maps a Discord option type to the type of the
