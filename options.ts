@@ -11,12 +11,12 @@ import {
 } from "./deps.ts";
 
 export type ChatInputAppOptions =
- & RESTPostAPIChatInputApplicationCommandsJSONBody
-& (
-  ChatInputAppOptionsWithOptionsHandler
-  ChatInputAppOptionsWithSubcommandsHandler
-  ChatInputAppOptionsWithGroupsHandler
-);
+  & RESTPostAPIChatInputApplicationCommandsJSONBody
+  & (
+    | ChatInputAppOptionsWithOptionsHandler
+    | ChatInputAppOptionsWithSubcommandsHandler
+    | ChatInputAppOptionsWithGroupsHandler
+  );
 
 /**
  * OptionKey is the structure to identify an option.
@@ -45,9 +45,9 @@ export type ChatInputAppOptions =
 /**
  * OptionsCollection is an option descriptor for a slash command's options.
  */
-export interface OptionsCollection{
+export interface OptionsCollection {
   options: {
-    [optionName in string]: APIApplicationCommandBasicOption
+    [optionName in string]: APIApplicationCommandBasicOption;
   };
 }
 
@@ -57,7 +57,7 @@ export interface OptionsCollection{
  */
 export interface SubcommandsCollection {
   subcommands: {
-    [subcommandName: string]:OptionsCollection;
+    [subcommandName: string]: OptionsCollection;
   };
 }
 
@@ -67,28 +67,30 @@ export interface SubcommandsCollection {
  */
 export interface GroupsCollection {
   groups: {
-    [groupName: string]:SubcommandsCollection;
+    [groupName: string]: SubcommandsCollection;
   };
 }
 
-export type HandlerMapOf<O extends OptionsCollection | SubcommandsCollection | GroupsCollection> =
-  O extends OptionsCollection ? OptionsHandlerMap
+export type HandlerMapOf<
+  O extends OptionsCollection | SubcommandsCollection | GroupsCollection,
+> = O extends OptionsCollection ? OptionsHandlerMap
   : O extends SubcommandsCollection ? SubcommandsHandlerMap
   : O extends GroupsCollection ? GroupsHandlerMap
   : never;
 
-export type OptionsHandlerMap  = (options: OptionsCollection['options']) => APIInteractionResponse;
+export type OptionsHandlerMap = (
+  options: OptionsCollection["options"],
+) => APIInteractionResponse;
 
-export type SubcommandsHandlerMap  = {
-  [subcommandName in keyof SubcommandsCollection['subcommands']]: (
-    options: SubcommandsCollection['subcommands'][subcommandName]['options'],
+export type SubcommandsHandlerMap = {
+  [subcommandName in keyof SubcommandsCollection["subcommands"]]: (
+    options: SubcommandsCollection["subcommands"][subcommandName]["options"],
   ) => APIInteractionResponse;
 };
 
-export type GroupsHandlerMap  = {
-  [groupName in keyof GroupsCollection['groups']]: SubcommandsHandlerMap;
+export type GroupsHandlerMap = {
+  [groupName in keyof GroupsCollection["groups"]]: SubcommandsHandlerMap;
 };
-
 
 const options: ChatInputAppOptions = {
   name: "permissions",
