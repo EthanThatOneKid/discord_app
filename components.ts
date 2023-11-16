@@ -1,5 +1,12 @@
-import type { APIApplicationCommandBasicOption } from "./deps.ts";
-import { ApplicationCommandOptionType } from "./deps.ts";
+import type {
+  APIApplicationCommand,
+  APIApplicationCommandBasicOption,
+  APIApplicationCommandUserOption,
+} from "./deps.ts";
+import {
+  ApplicationCommandOptionType,
+  ApplicationCommandOptionType,
+} from "./deps.ts";
 
 /**
  * OptionsCollection is an option descriptor for a slash command's options.
@@ -100,15 +107,49 @@ const schema = {
   },
 } as const satisfies Schema;
 
-const app: DiscordApp<typeof schema> = [{
-  kind: "shit",
-  hello: {
-    options: {
-      option1: {
-        name: "option1",
-        description: "option1 example description",
-        type: ApplicationCommandOptionType.Integer,
+type MessageInteractionConfig = APIApplicationCommand; // ['type'];
+
+type DiscordAppConfig =
+  | GroupsCollection
+  | SubcommandsCollection
+  | OptionsCollection
+  | MessageInteractionConfig
+  | UserInteractionConfig;
+
+// Desired app.
+// https://discord.com/developers/docs/interactions/receiving-and-responding
+const app = {
+  user: {
+    type: ApplicationCommandOptionType.User,
+    name: "Name of user command.",
+    description: "Description of user command.",
+  } satisfies APIApplicationCommandUserOption,
+  groups: {
+    group_name1: {
+      subcommands: {
+        subcommand_name1: {
+          options: {
+            option_name1: {
+              name: "option_name1", //
+              description: "Option name 1 example description text.",
+              type: ApplicationCommandOptionType.String,
+            } satisfies APIApplicationCommandBasicOption,
+          },
+        },
       },
     },
   },
-}];
+};
+
+// const app: DiscordApp<typeof schema> = [{
+//   kind: "shit",
+//   hello: {
+//     options: {
+//       option1: {
+//         name: "option1",
+//         description: "option1 example description",
+//         type: ApplicationCommandOptionType.Integer,
+//       },
+//     },
+//   },
+// }];
