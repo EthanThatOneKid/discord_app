@@ -1,19 +1,34 @@
 import type {
   APIApplicationCommand,
   APIApplicationCommandBasicOption,
+  APIApplicationCommandInteractionWrapper,
+  APIApplicationCommandOption,
   APIApplicationCommandUserOption,
+  APIChatInputApplicationCommandInteractionData,
+  // APIChatInputApplicationCommandInteraction,
+  APIInteractionResponse,
+  // APIMessageApplicationCommandInteraction,
+  APIMessageApplicationCommandInteractionData,
+  APIMessageComponent,
+  // APIUserApplicationCommandInteraction,
+  APIUserApplicationCommandInteractionData,
 } from "./deps.ts";
 import {
   ApplicationCommandOptionType,
-  ApplicationCommandOptionType,
+  ApplicationCommandType,
+  InteractionType,
 } from "./deps.ts";
+
+type BaseOptions = Omit<APIApplicationCommandOption, "type" | "options">;
+
+type BasicOption = Omit<APIApplicationCommandBasicOption, "name">;
 
 /**
  * OptionsCollection is an option descriptor for a slash command's options.
  */
-export interface OptionsCollection {
+export interface OptionsCollection<T> {
   options: {
-    [optionName in string]: APIApplicationCommandBasicOption;
+    [optionName in string]: T;
   };
 }
 
@@ -21,9 +36,9 @@ export interface OptionsCollection {
  * SubcommandsCollection is an option descriptor for a slash command's
  * subcommands.
  */
-export interface SubcommandsCollection {
+export interface SubcommandsCollection<T> {
   subcommands: {
-    [subcommandName: string]: OptionsCollection;
+    [subcommandName: string]: OptionsCollection<T>;
   };
 }
 
@@ -31,90 +46,143 @@ export interface SubcommandsCollection {
  * GroupsCollection is an option descriptor for a slash command's
  * subcommand groups.
  */
-export interface GroupsCollection {
+export interface GroupsCollection<T> {
   groups: {
-    [groupName: string]: SubcommandsCollection;
+    [groupName: string]: SubcommandsCollection<T>;
   };
 }
 
 /**
  * FieldTypeMap is a map of schema field types to TypeScript types.
  */
-export interface FieldTypeMap {
-  //   string: string;
-  //   number: number;
-  //   boolean: boolean;
-  //   "string[]": string[];
-  //   "number[]": number[];
-  //   "boolean[]": boolean[];
-  groups: GroupsCollection;
-  subcommands: SubcommandsCollection;
-  options: OptionsCollection;
-  user: unknown;
-  message: unknown;
-}
+// export interface FieldTypeMap {
+//   //   string: string;
+//   //   number: number;
+//   //   boolean: boolean;
+//   //   "string[]": string[];
+//   //   "number[]": number[];
+//   //   "boolean[]": boolean[];
+//   groups: GroupsCollection;
+//   subcommands: SubcommandsCollection;
+//   options: OptionsCollection;
+//   user: unknown;
+//   message: unknown;
+// }
 
 /**
  * FieldTypeOf converts a schema field type to a TypeScript type.
  */
-export type FieldTypeOf<TSchemaFieldType extends keyof FieldTypeMap> =
-  FieldTypeMap[TSchemaFieldType];
+// export type FieldTypeOf<TSchemaFieldType extends keyof FieldTypeMap> =
+//   FieldTypeMap[TSchemaFieldType];
 
 /**
  * SchemaComponent is a component from a schema.
  */
-export type SchemaComponent = Record<string, keyof FieldTypeMap>;
+// export type SchemaComponent = Record<string, keyof FieldTypeMap>;
 
 /**
  * Schema is a collection of components.
  */
-export type Schema = Record<string, SchemaComponent>;
+// export type Schema = Record<string, SchemaComponent>;
 
 /**
  * Component is a component from a schema by kind.
  */
-export type Component<
-  TSchema extends Schema,
-  TKind extends keyof TSchema,
-> =
-  & { kind: TKind }
-  & {
-    [TFieldName in keyof TSchema[TKind]]: FieldTypeOf<
-      TSchema[TKind][TFieldName]
-    >;
-  };
+// export type Component<
+//   TSchema extends Schema,
+//   TKind extends keyof TSchema,
+// > =
+//   & { kind: TKind }
+//   & {
+//     [TFieldName in keyof TSchema[TKind]]: FieldTypeOf<
+//       TSchema[TKind][TFieldName]
+//     >;
+//   };
 
 /**
  * ComponentsOf is a list of components from a schema.
  */
-export type ComponentsOf<TSchema extends Schema> = Array<ComponentOf<TSchema>>;
+// export type ComponentsOf<TSchema extends Schema> = Array<ComponentOf<TSchema>>;
 
 /**
  * ComponentOf is a component from a schema.
  */
-export type ComponentOf<TSchema extends Schema> = {
-  [TKind in keyof TSchema]: Component<TSchema, TKind>;
-}[keyof TSchema];
+// export type ComponentOf<TSchema extends Schema> = {
+//   [TKind in keyof TSchema]: Component<TSchema, TKind>;
+// }[keyof TSchema];
 
 /**
  * DiscordApp is a Discord application command.
  */
-export type DiscordApp<TSchema extends Schema> = ComponentsOf<TSchema>;
+// export type DiscordApp<TSchema extends Schema> = ComponentsOf<TSchema>;
 
-const schema = {
-  shit: {
-    hello: "options",
-  },
-} as const satisfies Schema;
+// const schema = {
+//   shit: {
+//     hello: "options",
+//   },
+// } as const satisfies Schema;
 
-type MessageInteractionConfig = APIApplicationCommand; // ['type'];
+interface UserCommandOptions extends Omit<APIApplicationCommand, "options"> {
+  type: ApplicationCommandType.User;
+}
 
-type DiscordAppConfig =
-  | GroupsCollection
-  | SubcommandsCollection
-  | OptionsCollection
-  | MessageInteractionConfig
-  | UserInteractionConfig;
+interface MessageCommandOptions extends Omit<APIApplicationCommand, "options"> {
+  type: ApplicationCommandType.Message;
+}
+
+// Type shit:
+// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIApplicationCommandInteraction
+type AppSchema =
+  | UserCommandOptions
+  | MessageCommandOptions
+  | (GroupsCollection<BasicOption> & BaseOptions)
+  | (SubcommandsCollection<BasicOption> & BaseOptions)
+  | (OptionsCollection<BasicOption> & BaseOptions);
+
+// Type shit:
+// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIMessageComponentInteraction
+type MessageComponentSchema = APIMessageComponent;
+
+/**
+ * Promisable is a utility type that represents a type and itself wrapped in a promise.
+ */
+type Promisable<T> = T | Promise<T>;
+
+type App<TAppSchema extends AppSchema> = TAppSchema extends UserCommandOptions
+  ? {
+    interact(
+      interaction: APIApplicationCommandInteractionWrapper<
+        APIUserApplicationCommandInteractionData & {
+          name: TAppSchema["name"];
+        }
+      >,
+    ): Promisable<APIInteractionResponse>;
+  }
+  : TAppSchema extends MessageCommandOptions ? {
+      interact(
+        interaction: APIApplicationCommandInteractionWrapper<
+          APIMessageApplicationCommandInteractionData & {
+            name: TAppSchema["name"];
+          }
+        >,
+      ): Promisable<APIInteractionResponse>;
+    }
+  : TAppSchema extends OptionsCollection<BasicOption> ? {
+      interact(
+        interaction: APIApplicationCommandInteractionWrapper<
+          APIChatInputApplicationCommandInteractionData & {
+            name: TAppSchema["name"];
+            options: TAppSchema["options"];
+          }
+        >,
+      ): Promisable<APIInteractionResponse>;
+    }
+  // TODO: Create nested interact methods for subcommands and groups.
+  // : TAppSchema extends
+  : never;
+
+// TODO: Handle message components, modal submits, and auto completion.
+// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIInteraction
 
 // Desired app.
 // https://discord.com/developers/docs/interactions/receiving-and-responding
