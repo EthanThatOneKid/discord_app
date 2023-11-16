@@ -19,15 +19,21 @@ import {
   InteractionType,
 } from "./deps.ts";
 
+/**
+ * BaseOptions is an option descriptor for a slash command's base options.
+ */
 type BaseOptions = Omit<APIApplicationCommandOption, "type" | "options">;
 
+/**
+ * BasicOption is an option descriptor for a slash command's options.
+ */
 type BasicOption = Omit<APIApplicationCommandBasicOption, "name">;
 
 /**
  * OptionsCollection is an option descriptor for a slash command's options.
  */
 export interface OptionsCollection<T> {
-  options: {
+  options?: {
     [optionName in string]: T;
   };
 }
@@ -38,7 +44,7 @@ export interface OptionsCollection<T> {
  */
 export interface SubcommandsCollection<T> {
   subcommands: {
-    [subcommandName: string]: OptionsCollection<T>;
+    [subcommandName: string]: OptionsCollection<T> & Omit<BaseOptions, "name">;
   };
 }
 
@@ -48,79 +54,9 @@ export interface SubcommandsCollection<T> {
  */
 export interface GroupsCollection<T> {
   groups: {
-    [groupName: string]: SubcommandsCollection<T>;
+    [groupName: string]: SubcommandsCollection<T> & Omit<BaseOptions, "name">;
   };
 }
-
-/**
- * FieldTypeMap is a map of schema field types to TypeScript types.
- */
-// export interface FieldTypeMap {
-//   //   string: string;
-//   //   number: number;
-//   //   boolean: boolean;
-//   //   "string[]": string[];
-//   //   "number[]": number[];
-//   //   "boolean[]": boolean[];
-//   groups: GroupsCollection;
-//   subcommands: SubcommandsCollection;
-//   options: OptionsCollection;
-//   user: unknown;
-//   message: unknown;
-// }
-
-/**
- * FieldTypeOf converts a schema field type to a TypeScript type.
- */
-// export type FieldTypeOf<TSchemaFieldType extends keyof FieldTypeMap> =
-//   FieldTypeMap[TSchemaFieldType];
-
-/**
- * SchemaComponent is a component from a schema.
- */
-// export type SchemaComponent = Record<string, keyof FieldTypeMap>;
-
-/**
- * Schema is a collection of components.
- */
-// export type Schema = Record<string, SchemaComponent>;
-
-/**
- * Component is a component from a schema by kind.
- */
-// export type Component<
-//   TSchema extends Schema,
-//   TKind extends keyof TSchema,
-// > =
-//   & { kind: TKind }
-//   & {
-//     [TFieldName in keyof TSchema[TKind]]: FieldTypeOf<
-//       TSchema[TKind][TFieldName]
-//     >;
-//   };
-
-/**
- * ComponentsOf is a list of components from a schema.
- */
-// export type ComponentsOf<TSchema extends Schema> = Array<ComponentOf<TSchema>>;
-
-/**
- * ComponentOf is a component from a schema.
- */
-// export type ComponentOf<TSchema extends Schema> = {
-//   [TKind in keyof TSchema]: Component<TSchema, TKind>;
-// }[keyof TSchema];
-
-/**
- * DiscordApp is a Discord application command.
- */
-// export type DiscordApp<TSchema extends Schema> = ComponentsOf<TSchema>;
-
-// const schema = {
-//   shit: {
-//     hello: "options",
-//   },
-// } as const satisfies Schema;
 
 interface UserCommandOptions extends Omit<APIApplicationCommand, "options"> {
   type: ApplicationCommandType.User;
@@ -130,9 +66,7 @@ interface MessageCommandOptions extends Omit<APIApplicationCommand, "options"> {
   type: ApplicationCommandType.Message;
 }
 
-// Type shit:
-// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIApplicationCommandInteraction
-type AppSchema =
+export type AppSchema =
   | UserCommandOptions
   | MessageCommandOptions
   | (GroupsCollection<BasicOption> & BaseOptions)
@@ -141,7 +75,7 @@ type AppSchema =
 
 // Type shit:
 // https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIMessageComponentInteraction
-type MessageComponentSchema = APIMessageComponent;
+// type MessageComponentSchema = APIMessageComponent;
 
 /**
  * Promisable is a utility type that represents a type and itself wrapped in a promise.
@@ -167,17 +101,22 @@ export type OptionTypeOf<
   : T extends ApplicationCommandOptionType.Boolean ? boolean
   : never;
 
-export type OptionsMapOf<T extends OptionsCollection<BasicOption>> = {
-  [optionName in keyof T["options"]]: OptionTypeOf<
-    T["options"][optionName]["type"]
-  >;
-};
+/**
+ * OptionsMapOf maps a schema option type to a runtime option type.
+ */
+export type OptionsMapOf<T extends OptionsCollection<BasicOption>> = T extends
+  Required<OptionsCollection<BasicOption>> ? {
+    [optionName in keyof T["options"]]: OptionTypeOf<
+      T["options"][optionName]["type"]
+    >;
+  }
+  : undefined;
 
 /**
  * App is the app interface based on the given app schema.
  */
-type App<TAppSchema extends AppSchema> = TAppSchema extends UserCommandOptions
-  ? {
+export type App<TAppSchema extends AppSchema> = TAppSchema extends
+  UserCommandOptions ? {
     interact(
       interaction: APIApplicationCommandInteractionWrapper<
         APIUserApplicationCommandInteractionData & {
