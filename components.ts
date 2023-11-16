@@ -148,6 +148,34 @@ type MessageComponentSchema = APIMessageComponent;
  */
 type Promisable<T> = T | Promise<T>;
 
+/**
+ * OptionTypeOf is a type that maps a Discord option type to the type of the
+ * option's value.
+ */
+export type OptionTypeOf<
+  T extends ApplicationCommandOptionType,
+> = T extends
+  | ApplicationCommandOptionType.String
+  | ApplicationCommandOptionType.User
+  | ApplicationCommandOptionType.Channel
+  | ApplicationCommandOptionType.Role
+  | ApplicationCommandOptionType.Mentionable
+  | ApplicationCommandOptionType.Attachment ? string
+  : T extends
+    ApplicationCommandOptionType.Integer | ApplicationCommandOptionType.Number
+    ? number
+  : T extends ApplicationCommandOptionType.Boolean ? boolean
+  : never;
+
+export type OptionsMapOf<T extends OptionsCollection<BasicOption>> = {
+  [optionName in keyof T["options"]]: OptionTypeOf<
+    T["options"][optionName]["type"]
+  >;
+};
+
+/**
+ * App is the app interface based on the given app schema.
+ */
 type App<TAppSchema extends AppSchema> = TAppSchema extends UserCommandOptions
   ? {
     interact(
@@ -172,13 +200,44 @@ type App<TAppSchema extends AppSchema> = TAppSchema extends UserCommandOptions
         interaction: APIApplicationCommandInteractionWrapper<
           APIChatInputApplicationCommandInteractionData & {
             name: TAppSchema["name"];
-            options: TAppSchema["options"];
+            options: OptionsMapOf<TAppSchema>;
           }
         >,
       ): Promisable<APIInteractionResponse>;
     }
-  // TODO: Create nested interact methods for subcommands and groups.
-  // : TAppSchema extends
+  : TAppSchema extends SubcommandsCollection<BasicOption> ? {
+      [subcommandName in keyof TAppSchema["subcommands"]]: {
+        interact(
+          interaction: APIApplicationCommandInteractionWrapper<
+            APIChatInputApplicationCommandInteractionData & {
+              name: TAppSchema["name"];
+              subcommandName: subcommandName;
+              options: OptionsMapOf<TAppSchema["subcommands"][subcommandName]>;
+            }
+          >,
+        ): Promisable<APIInteractionResponse>;
+      };
+    }
+  : TAppSchema extends GroupsCollection<BasicOption> ? {
+      [groupName in keyof TAppSchema["groups"]]: {
+        [
+          subcommandName in keyof TAppSchema["groups"][groupName]["subcommands"]
+        ]: {
+          interact(
+            interaction: APIApplicationCommandInteractionWrapper<
+              APIChatInputApplicationCommandInteractionData & {
+                name: TAppSchema["name"];
+                groupName: groupName;
+                subcommandName: subcommandName;
+                options: OptionsMapOf<
+                  TAppSchema["groups"][groupName]["subcommands"][subcommandName]
+                >;
+              }
+            >,
+          ): Promisable<APIInteractionResponse>;
+        };
+      };
+    }
   : never;
 
 // TODO: Handle message components, modal submits, and auto completion.
