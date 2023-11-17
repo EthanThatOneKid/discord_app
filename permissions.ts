@@ -7,7 +7,10 @@ import * as discord_app from "./components.ts";
 // Example used:
 // https://discord.com/developers/docs/interactions/application-commands#example-walkthrough
 
-const permissionsAppSchema = {
+// TODO: Make
+// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=RESTPostAPIApplicationCommandsJSONBody
+
+export const permissionsHandler = discord_app.makeHandler({
   name: "permissions",
   description: "Get or edit permissions for a user or a role",
   groups: {
@@ -33,20 +36,18 @@ const permissionsAppSchema = {
       },
     },
   },
-} as const satisfies discord_app.AppSchema;
-
-const permissionsApp: discord_app.App<typeof permissionsAppSchema> = {
-  user: {
-    get: {
-      interact(interaction) {
+}, {
+  groups: {
+    user: {
+      get(interaction) {
         const user = interaction.data.options.user;
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content: `Hello, @${interaction.user?.username}!`,
+            content: `Getting permissions for user \`${user}\`!`,
           },
         };
       },
     },
   },
-};
+});

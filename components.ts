@@ -116,37 +116,31 @@ export type OptionsMapOf<T extends OptionsCollection<BasicOption>> = T extends
  * App is the app interface based on the given app schema.
  */
 export type App<TAppSchema extends AppSchema> = TAppSchema extends
-  UserCommandOptions ? {
-    interact(
+  UserCommandOptions ? (
+    interaction: APIApplicationCommandInteractionWrapper<
+      APIUserApplicationCommandInteractionData & {
+        name: TAppSchema["name"];
+      }
+    >,
+  ) => Promisable<APIInteractionResponse>
+  : TAppSchema extends MessageCommandOptions ? (
       interaction: APIApplicationCommandInteractionWrapper<
-        APIUserApplicationCommandInteractionData & {
+        APIMessageApplicationCommandInteractionData & {
           name: TAppSchema["name"];
         }
       >,
-    ): Promisable<APIInteractionResponse>;
-  }
-  : TAppSchema extends MessageCommandOptions ? {
-      interact(
-        interaction: APIApplicationCommandInteractionWrapper<
-          APIMessageApplicationCommandInteractionData & {
-            name: TAppSchema["name"];
-          }
-        >,
-      ): Promisable<APIInteractionResponse>;
-    }
-  : TAppSchema extends OptionsCollection<BasicOption> ? {
-      interact(
-        interaction: APIApplicationCommandInteractionWrapper<
-          APIChatInputApplicationCommandInteractionData & {
-            name: TAppSchema["name"];
-            options: OptionsMapOf<TAppSchema>;
-          }
-        >,
-      ): Promisable<APIInteractionResponse>;
-    }
+    ) => Promisable<APIInteractionResponse>
+  : TAppSchema extends OptionsCollection<BasicOption> ? (
+      interaction: APIApplicationCommandInteractionWrapper<
+        APIChatInputApplicationCommandInteractionData & {
+          name: TAppSchema["name"];
+          options: OptionsMapOf<TAppSchema>;
+        }
+      >,
+    ) => Promisable<APIInteractionResponse>
   : TAppSchema extends SubcommandsCollection<BasicOption> ? {
-      [subcommandName in keyof TAppSchema["subcommands"]]: {
-        interact(
+      subcommands: {
+        [subcommandName in keyof TAppSchema["subcommands"]]: (
           interaction: APIApplicationCommandInteractionWrapper<
             APIChatInputApplicationCommandInteractionData & {
               name: TAppSchema["name"];
@@ -154,15 +148,16 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
               options: OptionsMapOf<TAppSchema["subcommands"][subcommandName]>;
             }
           >,
-        ): Promisable<APIInteractionResponse>;
+        ) => Promisable<APIInteractionResponse>;
       };
     }
   : TAppSchema extends GroupsCollection<BasicOption> ? {
-      [groupName in keyof TAppSchema["groups"]]: {
-        [
-          subcommandName in keyof TAppSchema["groups"][groupName]["subcommands"]
-        ]: {
-          interact(
+      groups: {
+        [groupName in keyof TAppSchema["groups"]]: {
+          [
+            subcommandName
+              in keyof TAppSchema["groups"][groupName]["subcommands"]
+          ]: (
             interaction: APIApplicationCommandInteractionWrapper<
               APIChatInputApplicationCommandInteractionData & {
                 name: TAppSchema["name"];
@@ -173,11 +168,19 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
                 >;
               }
             >,
-          ): Promisable<APIInteractionResponse>;
+          ) => Promisable<APIInteractionResponse>;
         };
       };
     }
   : never;
+
+export function makeHandler<TAppSchema extends AppSchema>(
+  _: TAppSchema,
+  app: App<TAppSchema>,
+): App<TAppSchema> {
+  // Noop.
+  return app;
+}
 
 // TODO: Handle message components, modal submits, and auto completion.
 // https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIInteraction
