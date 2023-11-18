@@ -58,22 +58,33 @@ export interface GroupsCollection<T> {
   };
 }
 
+/**
+ * UserCommandOptions is a Discord Application Command descriptor for a slash
+ * command that targets a user.
+ */
 interface UserCommandOptions extends Omit<APIApplicationCommand, "options"> {
   type: ApplicationCommandType.User;
 }
 
+/**
+ * MessageCommandOptions is a Discord Application Command descriptor for a
+ * slash command that targets a message.
+ */
 interface MessageCommandOptions extends Omit<APIApplicationCommand, "options"> {
   type: ApplicationCommandType.Message;
 }
 
-export type AppSchema =
+/**
+ * AppSchema is the configuration of a Discord Application Command.
+ */
+type AppSchema =
   | UserCommandOptions
   | MessageCommandOptions
   | (GroupsCollection<BasicOption> & BaseOptions)
   | (SubcommandsCollection<BasicOption> & BaseOptions)
   | (OptionsCollection<BasicOption> & BaseOptions);
 
-// Type shit:
+// Future types:
 // https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIMessageComponentInteraction
 // type MessageComponentSchema = APIMessageComponent;
 
@@ -113,7 +124,7 @@ export type OptionsMapOf<T extends OptionsCollection<BasicOption>> = T extends
   : undefined;
 
 /**
- * App is the app interface based on the given app schema.
+ * App is a Discord Application Command interaction handler.
  */
 export type App<TAppSchema extends AppSchema> = TAppSchema extends
   UserCommandOptions ? (
