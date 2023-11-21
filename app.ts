@@ -17,12 +17,14 @@ import {
 /**
  * BaseOptions is an option descriptor for a slash command's base options.
  */
-type BaseOptions = Omit<APIApplicationCommandOption, "type" | "options">;
+type BaseOptions = Omit<
+  RESTPostAPIApplicationCommandsJSONBody,
+  "type" | "options"
+>;
 
 /**
  * ChatInputOption is an option descriptor for a slash command's options.
  */
-// BaseAppSchema
 type ChatInputOption = Omit<APIApplicationCommandBasicOption, "name">;
 
 /**
@@ -40,7 +42,7 @@ export interface OptionsCollection<T> {
  */
 export interface SubcommandsCollection<T> {
   subcommands: {
-    [subcommandName: string]: OptionsCollection<T> & Omit<BaseOptions, "name">;
+    [subcommandName: string]: OptionsCollection<T>;
   };
 }
 
@@ -50,7 +52,7 @@ export interface SubcommandsCollection<T> {
  */
 export interface GroupsCollection<T> {
   groups: {
-    [groupName: string]: SubcommandsCollection<T> & Omit<BaseOptions, "name">;
+    [groupName: string]: SubcommandsCollection<T>;
   };
 }
 
@@ -59,7 +61,7 @@ export interface GroupsCollection<T> {
  * command that targets a user.
  */
 interface UserCommandOptions {
-  user: Omit<APIApplicationCommand, "type" | "options">;
+  user: Omit<APIApplicationCommandOption, "type" | "options">;
 }
 
 /**
@@ -67,7 +69,7 @@ interface UserCommandOptions {
  * slash command that targets a message.
  */
 interface MessageCommandOptions {
-  message: Omit<APIApplicationCommand, "type" | "options">;
+  message: Omit<APIApplicationCommandOption, "type" | "options">;
 }
 
 /**
@@ -76,12 +78,10 @@ interface MessageCommandOptions {
  */
 interface ChatInputCommandOptions {
   chatInput:
-    & Omit<APIApplicationCommand, "type" | "options">
-    & (
-      | OptionsCollection<ChatInputOption>
-      | SubcommandsCollection<ChatInputOption>
-      | GroupsCollection<ChatInputOption>
-    );
+    // & Omit<APIApplicationCommandOption, "type" | "options">
+    | OptionsCollection<ChatInputOption>
+    | SubcommandsCollection<ChatInputOption>
+    | GroupsCollection<ChatInputOption>;
 }
 
 /**
@@ -147,31 +147,28 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
         }
       >,
     ) => Promisable<APIInteractionResponse>
-  : TAppSchema extends (OptionsCollection<ChatInputOption> & BaseOptions) ? (
+  : TAppSchema extends (OptionsCollection<ChatInputOption>) ? (
       interaction: APIApplicationCommandInteractionWrapper<
         APIChatInputApplicationCommandInteractionData & {
           type: ApplicationCommandType.ChatInput;
-          name: TAppSchema["name"];
           options: OptionsMapOf<TAppSchema>;
         }
       >,
     ) => Promisable<APIInteractionResponse>
-  : TAppSchema extends (SubcommandsCollection<ChatInputOption> & BaseOptions)
-    ? {
+  : TAppSchema extends (SubcommandsCollection<ChatInputOption>) ? {
       subcommands: {
         [subcommandName in keyof TAppSchema["subcommands"]]: (
           interaction: APIApplicationCommandInteractionWrapper<
             APIChatInputApplicationCommandInteractionData & {
               type: ApplicationCommandType.ChatInput;
-              name: TAppSchema["name"];
-              subcommandName: subcommandName;
+              // name:
               options: OptionsMapOf<TAppSchema["subcommands"][subcommandName]>;
             }
           >,
         ) => Promisable<APIInteractionResponse>;
       };
     }
-  : TAppSchema extends (GroupsCollection<ChatInputOption> & BaseOptions) ? {
+  : TAppSchema extends (GroupsCollection<ChatInputOption>) ? {
       groups: {
         [groupName in keyof TAppSchema["groups"]]: {
           [
@@ -180,9 +177,9 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
           ]: (
             interaction: APIApplicationCommandInteractionWrapper<
               APIChatInputApplicationCommandInteractionData & {
-                name: TAppSchema["name"];
-                groupName: groupName;
-                subcommandName: subcommandName;
+                // name: TAppSchema["name"];
+                // groupName: groupName;
+                // subcommandName: subcommandName;
                 options: OptionsMapOf<
                   TAppSchema["groups"][groupName]["subcommands"][subcommandName]
                 >;
@@ -216,3 +213,45 @@ export function makeHandler<TAppSchema extends AppSchema>(
   // Noop.
   return app;
 }
+
+const permissionsHandler = makeHandler({
+  name: "permissions",
+  description: "Get or edit permissions for a user or a role.",
+  groups: {
+    user: {
+      description: "Get or edit permissions for a user.",
+      subcommands: {
+        get: {
+          description: "Get permissions for a user.",
+          options: {
+            user: {
+              description: "The user to get.",
+              type: ApplicationCommandOptionType.User,
+              required: true,
+            },
+            channel: {
+              description:
+                "The channel permssions to get. If omitted, the guild permissions will be returned.",
+              type: ApplicationCommandOptionType.Channel,
+              required: false,
+            },
+          },
+        },
+      },
+    },
+  },
+}, {
+  groups: {
+    user: {
+      get(interaction) {
+          return {
+            type: 
+            data: {
+              content: `User: ${interaction.data.options?.user}`,
+            },
+          };
+      },
+    },
+    }
+  }
+});
