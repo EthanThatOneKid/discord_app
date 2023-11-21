@@ -20,9 +20,10 @@ import {
 type BaseOptions = Omit<APIApplicationCommandOption, "type" | "options">;
 
 /**
- * BasicOption is an option descriptor for a slash command's options.
+ * ChatInputOption is an option descriptor for a slash command's options.
  */
-type BasicOption = Omit<APIApplicationCommandBasicOption, "name">;
+// BaseAppSchema
+type ChatInputOption = Omit<APIApplicationCommandBasicOption, "name">;
 
 /**
  * OptionsCollection is an option descriptor for a slash command's options.
@@ -77,9 +78,9 @@ interface ChatInputCommandOptions {
   chatInput:
     & Omit<APIApplicationCommand, "type" | "options">
     & (
-      | OptionsCollection<BasicOption>
-      | SubcommandsCollection<BasicOption>
-      | GroupsCollection<BasicOption>
+      | OptionsCollection<ChatInputOption>
+      | SubcommandsCollection<ChatInputOption>
+      | GroupsCollection<ChatInputOption>
     );
 }
 
@@ -113,13 +114,13 @@ export type OptionTypeOf<
 /**
  * OptionsMapOf maps a schema option type to a runtime option type.
  */
-export type OptionsMapOf<T extends OptionsCollection<BasicOption>> = T extends
-  Required<OptionsCollection<BasicOption>> ? {
-    [optionName in keyof T["options"]]: OptionTypeOf<
-      T["options"][optionName]["type"]
-    >;
-  }
-  : undefined;
+export type OptionsMapOf<T extends OptionsCollection<ChatInputOption>> =
+  T extends Required<OptionsCollection<ChatInputOption>> ? {
+      [optionName in keyof T["options"]]: OptionTypeOf<
+        T["options"][optionName]["type"]
+      >;
+    }
+    : undefined;
 
 /**
  * Promisable is a utility type that represents a type and itself wrapped in a promise.
@@ -146,7 +147,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
         }
       >,
     ) => Promisable<APIInteractionResponse>
-  : TAppSchema extends (OptionsCollection<BasicOption> & BaseOptions) ? (
+  : TAppSchema extends (OptionsCollection<ChatInputOption> & BaseOptions) ? (
       interaction: APIApplicationCommandInteractionWrapper<
         APIChatInputApplicationCommandInteractionData & {
           type: ApplicationCommandType.ChatInput;
@@ -155,7 +156,8 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
         }
       >,
     ) => Promisable<APIInteractionResponse>
-  : TAppSchema extends (SubcommandsCollection<BasicOption> & BaseOptions) ? {
+  : TAppSchema extends (SubcommandsCollection<ChatInputOption> & BaseOptions)
+    ? {
       subcommands: {
         [subcommandName in keyof TAppSchema["subcommands"]]: (
           interaction: APIApplicationCommandInteractionWrapper<
@@ -169,7 +171,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
         ) => Promisable<APIInteractionResponse>;
       };
     }
-  : TAppSchema extends (GroupsCollection<BasicOption> & BaseOptions) ? {
+  : TAppSchema extends (GroupsCollection<ChatInputOption> & BaseOptions) ? {
       groups: {
         [groupName in keyof TAppSchema["groups"]]: {
           [
