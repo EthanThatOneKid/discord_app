@@ -21,6 +21,8 @@ import {
   InteractionResponseType,
 } from "./deps.ts";
 
+// TODO: Rename all generic `T`s.
+
 /**
  * AppUserCommandSchema is a Discord Application Command descriptor for a slash
  * command that targets a user.
@@ -168,6 +170,20 @@ export type RuntimeTypeMapOf<
   : undefined;
 
 /**
+ * AppChatInputInteractionOf is a utility type that infers the type of an interaction's
+ * data based on the interaction's schema.
+ */
+export type AppChatInputInteractionOf<
+  T extends AppOptionsSchema<APIApplicationCommandBasicOption>,
+> = APIApplicationCommandInteractionWrapper<
+  APIChatInputApplicationCommandInteractionData & {
+    parsedOptions: RuntimeTypeMapOf<T>;
+  }
+>;
+
+// Be more specific with the options.
+
+/**
  * App is a Discord Application Command interaction handler.
  */
 export type App<TAppSchema extends AppSchema> = TAppSchema extends
@@ -182,16 +198,12 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
             "subcommands"
           ]
         ]: (
-          interaction: APIApplicationCommandInteractionWrapper<
-            APIChatInputApplicationCommandInteractionData & {
-              parsedOptions: RuntimeTypeMapOf<
-                TAppSchema["chatInput"]["groups"][groupName][
-                  "subcommands"
-                ][
-                  subcommandName
-                ]
-              >;
-            }
+          interaction: AppChatInputInteractionOf<
+            TAppSchema["chatInput"]["groups"][groupName][
+              "subcommands"
+            ][
+              subcommandName
+            ]
           >,
         ) => Promisable<APIInteractionResponse>;
       };
@@ -201,12 +213,8 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
       & AppSubcommandsSchemaBase
     ) ? {
         [subcommandName in keyof TAppSchema["chatInput"]["subcommands"]]: (
-          interaction: APIApplicationCommandInteractionWrapper<
-            APIChatInputApplicationCommandInteractionData & {
-              parsedOptions: RuntimeTypeMapOf<
-                TAppSchema["chatInput"]["subcommands"][subcommandName]
-              >;
-            }
+          interaction: AppChatInputInteractionOf<
+            TAppSchema["chatInput"]["subcommands"][subcommandName]
           >,
         ) => Promisable<APIInteractionResponse>;
       }
@@ -214,11 +222,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
       & AppOptionsSchema<APIApplicationCommandBasicOption>
       & AppOptionsSchemaBase
     ) ? (
-        interaction: APIApplicationCommandInteractionWrapper<
-          APIChatInputApplicationCommandInteractionData & {
-            parsedOptions: RuntimeTypeMapOf<TAppSchema["chatInput"]>;
-          }
-        >,
+        interaction: AppChatInputInteractionOf<TAppSchema["chatInput"]>,
       ) => Promisable<APIInteractionResponse>
     : never)
   : TAppSchema extends AppUserCommandSchema ? (
@@ -247,7 +251,7 @@ export function makeHandler<TAppSchema extends AppSchema>(
 
 // Example used:
 // https://discord.com/developers/docs/interactions/application-commands#example-walkthrough
-function completePermissionsHandler() {
+function permissionsApp() {
   return makeHandler(
     {
       chatInput: {
@@ -324,7 +328,9 @@ function completePermissionsHandler() {
           },
         },
       },
-    },
+    } as const satisfies AppChatInputCommandSchema<
+      APIApplicationCommandBasicOption
+    >,
     {
       user: {
         get(interaction) {
