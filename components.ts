@@ -49,7 +49,7 @@ export type AppOptionSchemaBase = APIApplicationCommandBasicOption;
  * command subcommand.
  */
 export type AppOptionsSchemaBase = Omit<
-  APIApplicationCommandSubcommandOption,
+  APIApplicationCommandOption,
   "type" | "options"
 >;
 
@@ -117,12 +117,21 @@ export interface AppChatInputCommandSchema<T> {
 }
 
 /**
+ * AppChatInputBasicOption is a Discord Application Command descriptor for a
+ * slash command option that targets a chat input.
+ */
+export type AppChatInputBasicOption = Omit<
+  APIApplicationCommandBasicOption,
+  "name"
+>;
+
+/**
  * AppSchema is the configuration of a Discord Application Command.
  */
 type AppSchema =
   | AppUserCommandSchema
   | AppMessageCommandSchema
-  | AppChatInputCommandSchema<APIApplicationCommandBasicOption>;
+  | AppChatInputCommandSchema<AppChatInputBasicOption>;
 
 // Future types:
 // https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIMessageComponentInteraction
@@ -138,7 +147,7 @@ type Promisable<T> = T | Promise<T>;
  * option type.
  */
 export type RuntimeTypeOf<
-  T extends APIApplicationCommandBasicOption,
+  T extends AppChatInputBasicOption,
 > = T extends {
   type:
     | ApplicationCommandOptionType.String
@@ -161,10 +170,9 @@ export type RuntimeTypeOf<
  * RuntimeTypeMapOf maps a schema option type to a runtime option type.
  */
 export type RuntimeTypeMapOf<
-  T extends AppOptionsSchema<APIApplicationCommandBasicOption>,
+  T extends AppOptionsSchema<AppChatInputBasicOption>,
 > = T extends
-  Pick<Required<AppOptionsSchema<APIApplicationCommandBasicOption>>, "options">
-  ? {
+  Pick<Required<AppOptionsSchema<AppChatInputBasicOption>>, "options"> ? {
     [optionName in keyof T["options"]]: RuntimeTypeOf<T["options"][optionName]>;
   }
   : undefined;
@@ -174,7 +182,7 @@ export type RuntimeTypeMapOf<
  * data based on the interaction's schema.
  */
 export type AppChatInputInteractionOf<
-  T extends AppOptionsSchema<APIApplicationCommandBasicOption>,
+  T extends AppOptionsSchema<AppChatInputBasicOption>,
 > = APIApplicationCommandInteractionWrapper<
   APIChatInputApplicationCommandInteractionData & {
     parsedOptions: RuntimeTypeMapOf<T>;
@@ -187,9 +195,9 @@ export type AppChatInputInteractionOf<
  * App is a Discord Application Command interaction handler.
  */
 export type App<TAppSchema extends AppSchema> = TAppSchema extends
-  AppChatInputCommandSchema<APIApplicationCommandBasicOption>
+  AppChatInputCommandSchema<AppChatInputBasicOption>
   ? (TAppSchema["chatInput"] extends (
-    & AppSubcommandGroupsSchema<APIApplicationCommandBasicOption>
+    & AppSubcommandGroupsSchema<AppChatInputBasicOption>
     & AppSubcommandGroupsSchemaBase
   ) ? {
       [groupName in keyof TAppSchema["chatInput"]["groups"]]: {
@@ -209,7 +217,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
       };
     }
     : TAppSchema["chatInput"] extends (
-      & AppSubcommandsSchema<APIApplicationCommandBasicOption>
+      & AppSubcommandsSchema<AppChatInputBasicOption>
       & AppSubcommandsSchemaBase
     ) ? {
         [subcommandName in keyof TAppSchema["chatInput"]["subcommands"]]: (
@@ -219,7 +227,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
         ) => Promisable<APIInteractionResponse>;
       }
     : TAppSchema["chatInput"] extends (
-      & AppOptionsSchema<APIApplicationCommandBasicOption>
+      & AppOptionsSchema<AppChatInputBasicOption>
       & AppOptionsSchemaBase
     ) ? (
         interaction: AppChatInputInteractionOf<TAppSchema["chatInput"]>,
@@ -267,10 +275,12 @@ function permissionsApp() {
                 description: "Get permissions for a user",
                 options: {
                   user: {
+                    type: ApplicationCommandOptionType.User,
                     description: "The user to get",
                     required: true,
                   },
                   channel: {
+                    type: ApplicationCommandOptionType.Channel,
                     description:
                       "The channel permissions to get. If omitted, the guild permissions will be returned",
                     required: false,
@@ -281,10 +291,12 @@ function permissionsApp() {
                 description: "Edit permissions for a user",
                 options: {
                   user: {
+                    type: ApplicationCommandOptionType.User,
                     description: "The user to edit",
                     required: true,
                   },
                   channel: {
+                    type: ApplicationCommandOptionType.Channel,
                     description:
                       "The channel permissions to edit. If omitted, the guild permissions will be edited",
                     required: false,
@@ -300,10 +312,12 @@ function permissionsApp() {
                 description: "Get permissions for a role",
                 options: {
                   role: {
+                    type: ApplicationCommandOptionType.Role,
                     description: "The role to get",
                     required: true,
                   },
                   channel: {
+                    type: ApplicationCommandOptionType.Channel,
                     description:
                       "The channel permissions to get. If omitted, the guild permissions will be returned",
                     required: false,
@@ -314,10 +328,12 @@ function permissionsApp() {
                 description: "Edit permissions for a role",
                 options: {
                   role: {
+                    type: ApplicationCommandOptionType.Role,
                     description: "The role to edit",
                     required: true,
                   },
                   channel: {
+                    type: ApplicationCommandOptionType.Channel,
                     description:
                       "The channel permissions to edit. If omitted, the guild permissions will be edited",
                     required: false,
@@ -329,7 +345,7 @@ function permissionsApp() {
         },
       },
     } as const satisfies AppChatInputCommandSchema<
-      APIApplicationCommandBasicOption
+      AppChatInputBasicOption
     >,
     {
       user: {
@@ -374,37 +390,4 @@ function permissionsApp() {
       },
     },
   );
-}
-
-// TODO: Make
-// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=RESTPostAPIApplicationCommandsJSONBody
-
-export function simplePermissionsHandler() {
-  return makeHandler({
-    name: "permissions",
-    description: "Get or edit permissions for a user or a role",
-    options: {
-      user: {
-        name: "user",
-        description: "The user to get",
-        type: ApplicationCommandOptionType.User,
-        required: true,
-      },
-      channel: {
-        name: "channel",
-        description:
-          "The channel permissions to get. If omitted, the guild permissions will be returned",
-        type: ApplicationCommandOptionType.Channel,
-        required: false,
-      },
-    },
-  }, (interaction): APIInteractionResponse => {
-    const userID = interaction.data.options.user;
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `Hello, <@${userID}>!`,
-      },
-    };
-  });
 }
