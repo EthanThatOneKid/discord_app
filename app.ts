@@ -1,24 +1,18 @@
 import type {
-  APIApplicationCommand,
   APIApplicationCommandBasicOption,
   APIApplicationCommandInteractionWrapper,
   APIApplicationCommandOption,
-  APIApplicationCommandSubcommandGroupOption,
-  APIApplicationCommandSubcommandOption,
-  APIApplicationCommandUserOption,
   APIChatInputApplicationCommandInteractionData,
-  // APIChatInputApplicationCommandInteraction,
   APIInteractionResponse,
-  // APIMessageApplicationCommandInteraction,
   APIMessageApplicationCommandInteractionData,
-  APIMessageComponent,
-  // APIUserApplicationCommandInteraction,
   APIUserApplicationCommandInteractionData,
   RESTPostAPIApplicationCommandsJSONBody,
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
+  RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from "./deps.ts";
 import {
   ApplicationCommandOptionType,
-  InteractionResponseType,
+  ApplicationCommandType,
 } from "./deps.ts";
 
 // TODO: Rename all generic `T`s.
@@ -28,7 +22,11 @@ import {
  * command that targets a user.
  */
 interface AppUserCommandSchema {
-  user: APIApplicationCommandUserOption;
+  /**
+   * user is the configuration of a Discord Application Command that targets a
+   * user.
+   */
+  user: Omit<RESTPostAPIContextMenuApplicationCommandsJSONBody, "type">;
 }
 
 /**
@@ -36,7 +34,11 @@ interface AppUserCommandSchema {
  * slash command that targets a message.
  */
 interface AppMessageCommandSchema {
-  message: APIApplicationCommandUserOption;
+  /**
+   * message is the configuration of a Discord Application Command that targets
+   * a message.
+   */
+  message: Omit<RESTPostAPIContextMenuApplicationCommandsJSONBody, "type">;
 }
 
 /**
@@ -45,29 +47,11 @@ interface AppMessageCommandSchema {
 export type AppOptionSchemaBase = APIApplicationCommandBasicOption;
 
 /**
- * AppOptionsSchemaBase is the base configuration of a Discord application
- * command subcommand.
+ * AppChatInputSchemaBase is the base configuration of a Discord application
+ * command that targets a chat input.
  */
-export type AppOptionsSchemaBase = Omit<
-  APIApplicationCommandOption,
-  "type" | "options"
->;
-
-/**
- * AppSubcommandsSchemaBase is the base configuration of a Discord application
- * command's subcommands.
- */
-export type AppSubcommandsSchemaBase = Omit<
-  APIApplicationCommandSubcommandOption,
-  "type" | "options"
->;
-
-/**
- * AppSubcommandGroupsSchemaBase is the base configuration of a Discord application
- * command's subcommand groups.
- */
-export type AppSubcommandGroupsSchemaBase = Omit<
-  APIApplicationCommandSubcommandGroupOption,
+export type AppChatInputSchemaBase = Omit<
+  RESTPostAPIChatInputApplicationCommandsJSONBody,
   "type" | "options"
 >;
 
@@ -89,7 +73,7 @@ export interface AppSubcommandsSchema<T> {
   subcommands: {
     [subcommandName: string]:
       & AppOptionsSchema<T>
-      & Omit<AppSubcommandsSchemaBase, "name">;
+      & Omit<AppChatInputSchemaBase, "name">;
   };
 }
 
@@ -101,7 +85,7 @@ export interface AppSubcommandGroupsSchema<T> {
   groups: {
     [groupName: string]:
       & AppSubcommandsSchema<T>
-      & Omit<AppSubcommandGroupsSchemaBase, "name">;
+      & Omit<AppChatInputSchemaBase, "name">;
   };
 }
 
@@ -111,9 +95,9 @@ export interface AppSubcommandGroupsSchema<T> {
  */
 export interface AppChatInputCommandSchema<T> {
   chatInput:
-    | (AppOptionsSchema<T> & AppOptionsSchemaBase)
-    | (AppSubcommandsSchema<T> & AppSubcommandsSchemaBase)
-    | (AppSubcommandGroupsSchema<T> & AppSubcommandGroupsSchemaBase);
+    | (AppOptionsSchema<T> & AppChatInputSchemaBase)
+    | (AppSubcommandsSchema<T> & AppChatInputSchemaBase)
+    | (AppSubcommandGroupsSchema<T> & AppChatInputSchemaBase);
 }
 
 /**
@@ -132,10 +116,6 @@ type AppSchema =
   | AppUserCommandSchema
   | AppMessageCommandSchema
   | AppChatInputCommandSchema<AppChatInputBasicOption>;
-
-// Future types:
-// https://deno.land/x/discord_api_types@0.37.52/v10.ts?s=APIMessageComponentInteraction
-// type MessageComponentSchema = APIMessageComponent;
 
 /**
  * Promisable is a utility type that represents a type and itself wrapped in a promise.
@@ -189,8 +169,6 @@ export type AppChatInputInteractionOf<
   }
 >;
 
-// Be more specific with the options.
-
 /**
  * App is a Discord Application Command interaction handler.
  */
@@ -198,7 +176,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
   AppChatInputCommandSchema<AppChatInputBasicOption>
   ? (TAppSchema["chatInput"] extends (
     & AppSubcommandGroupsSchema<AppChatInputBasicOption>
-    & AppSubcommandGroupsSchemaBase
+    & AppChatInputSchemaBase
   ) ? {
       [groupName in keyof TAppSchema["chatInput"]["groups"]]: {
         [
@@ -218,7 +196,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
     }
     : TAppSchema["chatInput"] extends (
       & AppSubcommandsSchema<AppChatInputBasicOption>
-      & AppSubcommandsSchemaBase
+      & AppChatInputSchemaBase
     ) ? {
         [subcommandName in keyof TAppSchema["chatInput"]["subcommands"]]: (
           interaction: AppChatInputInteractionOf<
@@ -228,7 +206,7 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
       }
     : TAppSchema["chatInput"] extends (
       & AppOptionsSchema<AppChatInputBasicOption>
-      & AppOptionsSchemaBase
+      & AppChatInputSchemaBase
     ) ? (
         interaction: AppChatInputInteractionOf<TAppSchema["chatInput"]>,
       ) => Promisable<APIInteractionResponse>
@@ -257,137 +235,83 @@ export function makeHandler<TAppSchema extends AppSchema>(
   return app;
 }
 
-// Example used:
-// https://discord.com/developers/docs/interactions/application-commands#example-walkthrough
-function permissionsApp() {
-  return makeHandler(
-    {
-      chatInput: {
-        name: "permissions",
-        description: "Get or edit permissions for a user or a role",
-        // options: {}
-        // subcommands: {},
-        groups: {
-          user: {
-            description: "Get or edit permissions for a user",
-            subcommands: {
-              get: {
-                description: "Get permissions for a user",
-                options: {
-                  user: {
-                    type: ApplicationCommandOptionType.User,
-                    description: "The user to get",
-                    required: true,
-                  },
-                  channel: {
-                    type: ApplicationCommandOptionType.Channel,
-                    description:
-                      "The channel permissions to get. If omitted, the guild permissions will be returned",
-                    required: false,
-                  },
-                },
-              },
-              edit: {
-                description: "Edit permissions for a user",
-                options: {
-                  user: {
-                    type: ApplicationCommandOptionType.User,
-                    description: "The user to edit",
-                    required: true,
-                  },
-                  channel: {
-                    type: ApplicationCommandOptionType.Channel,
-                    description:
-                      "The channel permissions to edit. If omitted, the guild permissions will be edited",
-                    required: false,
-                  },
-                },
-              },
-            },
-          },
-          role: {
-            description: "Get or edit permissions for a role",
-            subcommands: {
-              get: {
-                description: "Get permissions for a role",
-                options: {
-                  role: {
-                    type: ApplicationCommandOptionType.Role,
-                    description: "The role to get",
-                    required: true,
-                  },
-                  channel: {
-                    type: ApplicationCommandOptionType.Channel,
-                    description:
-                      "The channel permissions to get. If omitted, the guild permissions will be returned",
-                    required: false,
-                  },
-                },
-              },
-              edit: {
-                description: "Edit permissions for a role",
-                options: {
-                  role: {
-                    type: ApplicationCommandOptionType.Role,
-                    description: "The role to edit",
-                    required: true,
-                  },
-                  channel: {
-                    type: ApplicationCommandOptionType.Channel,
-                    description:
-                      "The channel permissions to edit. If omitted, the guild permissions will be edited",
-                    required: false,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    } as const satisfies AppChatInputCommandSchema<
-      AppChatInputBasicOption
-    >,
-    {
-      user: {
-        get(interaction) {
-          const userID = interaction.data.parsedOptions.user;
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `Hello, <@${userID}>!`,
-            },
-          };
-        },
-        edit(interaction) {
-          const userID = interaction.data.parsedOptions.user;
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `Hello, <@${userID}>!`,
-            },
-          };
-        },
-      },
-      role: {
-        get(interaction) {
-          const roleID = interaction.data.parsedOptions.role;
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `Hello, <@&${roleID}>!`,
-            },
-          };
-        },
-        edit(interaction) {
-          const roleID = interaction.data.parsedOptions.role;
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `Hello, <@&${roleID}>!`,
-            },
-          };
-        },
-      },
-    },
-  );
+/**
+ * toAPIOptions converts a schema's options to valid Discord Application Command
+ * options.
+ */
+export function toAPIOptions(
+  schema: AppChatInputCommandSchema<AppChatInputBasicOption>["chatInput"],
+): APIApplicationCommandOption[] | undefined {
+  if ("options" in schema) {
+    if (schema.options === undefined) {
+      return undefined;
+    }
+
+    return Object.entries(schema.options).map(([name, option]) => ({
+      ...option,
+      type: option.type as number,
+      name,
+    }));
+  }
+
+  if ("subcommands" in schema) {
+    return Object.entries(schema.subcommands).map(([name, subcommand]) => {
+      const { options: _, ...options } = subcommand;
+      return {
+        ...options,
+        name,
+        type: ApplicationCommandOptionType.Subcommand as number,
+        options: toAPIOptions({ ...subcommand, name }),
+      };
+    });
+  }
+
+  if ("groups" in schema) {
+    return Object.entries(schema.groups).map(([name, group]) => {
+      const { subcommands: _, ...options } = group;
+      return {
+        ...options,
+        name,
+        type: ApplicationCommandOptionType.SubcommandGroup as number,
+        options: toAPIOptions({ ...group, name }),
+      };
+    });
+  }
+
+  return undefined;
+}
+
+/**
+ * toAPI converts an AppSchema to a registerable Discord Application Command descriptor.
+ */
+export function toAPI(
+  schema: AppSchema,
+): RESTPostAPIApplicationCommandsJSONBody {
+  if ("user" in schema) {
+    return {
+      ...schema.user,
+      type: ApplicationCommandType.User,
+    };
+  }
+
+  if ("message" in schema) {
+    return {
+      ...schema.message,
+      type: ApplicationCommandType.Message,
+    };
+  }
+
+  const result: RESTPostAPIApplicationCommandsJSONBody = {
+    ...schema.chatInput,
+    type: ApplicationCommandType.ChatInput,
+    options: toAPIOptions(schema.chatInput),
+  };
+  if ("groups" in result) {
+    delete result.groups;
+  }
+  if ("subcommands" in result) {
+    delete result.subcommands;
+  }
+
+  return result;
 }
