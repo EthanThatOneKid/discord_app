@@ -4,18 +4,22 @@ import type {
   RESTPostAPIApplicationCommandsJSONBody,
 } from "./deps.ts";
 import {
+  APIApplicationCommandInteractionDataOption,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
   InteractionType,
-  Utils,
 } from "./deps.ts";
 import type {
   App,
   AppChatInputBasicOption,
   AppChatInputCommandSchema,
+  AppChatInputSchemaBase,
   AppOptionsSchema,
   AppSchema,
+  AppSubcommandGroupsSchema,
+  AppSubcommandsSchema,
+  ParsedAppChatInputCommandOptions,
   RuntimeTypeMapOf,
 } from "./app.ts";
 import { registerApplicationCommand } from "./api.ts";
@@ -103,30 +107,114 @@ export function toAPI(
 }
 
 /**
- * parseChatInputOptions parses the options of a chat input command.
+ * fromAPIChatInputOptions parses the options of an incoming chat input command.
  */
-export function parseChatInputOptions<
-  T extends AppOptionsSchema<AppChatInputBasicOption>,
+export function fromAPIChatInputOptions<
+  T extends AppChatInputCommandSchema<AppChatInputBasicOption>["chatInput"],
 >(
-  schema: AppChatInputCommandSchema<AppChatInputBasicOption>,
-  options: APIApplicationCommandOption[],
-): {
-  subcommandGroupName?: string;
-  subcommandName?: string;
-  parsedOptions: RuntimeTypeMapOf<T>;
-} {
-  if (schema.chatInput === undefined) {
-    throw new Error("Invalid schema");
+  schema: T,
+  options: APIApplicationCommandInteractionDataOption[],
+): ParsedAppChatInputCommandOptions {
+  if ("options" in schema) {
+    if (schema.options === undefined) {
+      if (options.length > 0) {
+        throw new Error("Invalid options");
+      }
+
+      return {};
+    }
+
+    const schemaOptionNames = Object.keys(schema.options);
+    if (
+      schema.options !== undefined &&
+      options.length !== schemaOptionNames.length
+    ) {
+      throw new Error("Invalid options");
+    }
+    if (schemaOptionNames.length === 0) {
+      return {};
+    }
+
+    const parsedOptions: ParsedAppChatInputCommandOptions["parsedOptions"] = {};
+    for (const option of options) {
+      const optionSchema = schema.options[option.name];
+      if (optionSchema === undefined) {
+        throw new Error("Invalid option");
+      }
+
+      if (optionSchema.type !== option.type) {
+        throw new Error("Invalid option");
+      }
+
+      switch (option.type) {
+        case ApplicationCommandOptionType.String:
+        case ApplicationCommandOptionType.Boolean:
+        case ApplicationCommandOptionType.User:
+        case ApplicationCommandOptionType.Channel:
+        case ApplicationCommandOptionType.Role:
+        case ApplicationCommandOptionType.Mentionable: {
+          parsedOptions[option.name] = option.value;
+          break;
+        }
+
+        default: {
+          throw new Error("Invalid option");
+        }
+      }
+    }
+
+    return { parsedOptions };
   }
 
-  const parsedOptions = {} as RuntimeTypeMapOf<T>;
-  let subcommandGroupName: string | undefined;
-  let subcommandName: string | undefined;
-  // TODO: Figure out abstractions to iterate over options.
-  // TODO: parseChatInputSubcommandGroupOptions
-  // TODO: parseChatInputSubcommandOptions
-  // TODO: base case
-  return { subcommandGroupName, subcommandName, parsedOptions };
+  if ("subcommands" in schema) {
+    if (options.length !== 1) {
+      throw new Error("Invalid options");
+    }
+
+    const subcommandName = options[0].name;
+    const subcommandSchema = schema.subcommands[subcommandName];
+    if (subcommandSchema === undefined) {
+      throw new Error("Invalid subcommand");
+    }
+    if (options[0].type !== ApplicationCommandOptionType.Subcommand) {
+      throw new Error("Invalid subcommand");
+    }
+
+    const parsedOptions = fromAPIChatInputOptions(
+      { ...subcommandSchema, name: subcommandName },
+      options[0].options ?? [],
+    );
+    return {
+      subcommandName,
+      ...parsedOptions,
+    };
+  }
+
+  if ("groups" in schema) {
+    if (options.length !== 1) {
+      throw new Error("Invalid options");
+    }
+
+    const subcommandGroupName = options[0].name;
+    const subcommandGroupSchema = schema.groups[subcommandGroupName];
+    if (subcommandGroupSchema === undefined) {
+      throw new Error("Invalid subcommand group");
+    }
+    if (options[0].type !== ApplicationCommandOptionType.SubcommandGroup) {
+      throw new Error("Invalid subcommand group");
+    }
+
+    const parsedOptions = fromAPIChatInputOptions(
+      { ...subcommandGroupSchema, name: subcommandGroupName },
+      options[0].options ?? [],
+    );
+    return {
+      subcommandGroupName,
+      ...parsedOptions,
+    };
+  }
+
+  throw new Error("Invalid schema");
 }
 
 /**
@@ -171,54 +259,64 @@ export interface AppHandlerOptions<T> {
   publicKey: string;
 }
 
-// /**
-//  * createApp creates a Discord application command handler.
-//  */
-// export async function createApp<TAppSchema extends AppSchema>(
-//   options: AppHandlerOptions<TAppSchema>,
-//   handlers: App<TAppSchema>,
-// ): (r: Request) => Promise<Response> {
-//   const app = toAPI(options.schema);
-//   await registerApplicationCommand({
-//     applicationID: options.applicationID,
-//     token: options.token,
-//     applicationCommand: app,
-//   });
-//   return async (request: Request): Promise<Response> => {
-//     const { body, error } = await verify(request, options.publicKey);
-//     if (error) {
-//       return error;
-//     }
+/**
+ * createApp creates a registers a Discord application command and returns a
+ * request handler that handles the command.
+ */
+export async function createApp<TAppSchema extends AppSchema>(
+  options: AppHandlerOptions<TAppSchema>,
+  handlers: App<TAppSchema>,
+): (r: Request) => Promise<Response> {
+  const app = toAPI(options.schema);
+  await registerApplicationCommand({
+    applicationID: options.applicationID,
+    token: options.token,
+    applicationCommand: app,
+  });
+  return async (request: Request): Promise<Response> => {
+    const { body, error } = await verify(request, options.publicKey);
+    if (error) {
+      return error;
+    }
 
-//     const interaction = JSON.parse(body) as APIInteraction;
-//     switch (interaction.type) {
-//       case InteractionType.Ping: {
-//         return Response.json({ type: InteractionResponseType.Pong });
-//       }
+    const interaction = JSON.parse(body) as APIInteraction;
+    switch (interaction.type) {
+      case InteractionType.Ping: {
+        return Response.json({ type: InteractionResponseType.Pong });
+      }
 
-//       case InteractionType.ApplicationCommand: {
-//         if (interaction.data.type === ApplicationCommandType.Message) {
-//           if (!("message" in options.schema)) {
-//             return new Response("Invalid request", { status: 400 });
-//           }
+      case InteractionType.ApplicationCommand: {
+        if (interaction.data.type === ApplicationCommandType.Message) {
+          if (!("message" in options.schema)) {
+            return new Response("Invalid request", { status: 400 });
+          }
 
-//           // TODO: Parse options.
-//           const handleInteraction = handlers;
-//           return await handleInteraction(interaction);
-//         }
+          // TODO: Parse options.
+          const handleInteraction = handlers;
+          return await handleInteraction(interaction);
+        }
 
-//         // TODO: Parse options.
-//         const { subcommandGroupName, subcommandName, parsedOptions } =
-//           parseChatInputOptions(options.schema, interaction.data.options);
-//         return {};
-//       }
+        // TODO: User command type.
 
-//       default: {
-//         // TODO: case InteractionType.MessageComponent
-//         // TODO: case InteractionType.ApplicationCommandAutocomplete
-//         // TODO: case InteractionType.ModalSubmit
-//         return new Response("Unsupported interaction type", { status: 400 });
-//       }
-//     }
-//   };
-// }
+        if (interaction.data.type === ApplicationCommandType.ChatInput) {
+          if (!("chatInput" in options.schema)) {
+            return new Response("Invalid request", { status: 400 });
+          }
+
+          // TODO: Parse options.
+          const { subcommandGroupName, subcommandName, parsedOptions } =
+            parseChatInputOptions(options.schema, interaction.data.options);
+          // TODO: Get handler by subcommand group name and subcommand name.
+          return {};
+        }
+      }
+
+      default: {
+        // TODO: case InteractionType.MessageComponent
+        // TODO: case InteractionType.ApplicationCommandAutocomplete
+        // TODO: case InteractionType.ModalSubmit
+        return new Response("Unsupported interaction type", { status: 400 });
+      }
+    }
+  };
+}

@@ -96,6 +96,16 @@ export interface AppChatInputCommandSchema<T> {
 }
 
 /**
+ * ParsedAppChatInputCommandOptions is a utility type that represents the
+ * parsed options of a chat input command.
+ */
+export interface ParsedAppChatInputCommandOptions {
+  subcommandGroupName?: string;
+  subcommandName?: string;
+  parsedOptions?: Record<string, string | number | boolean>;
+}
+
+/**
  * AppChatInputBasicOption is a Discord Application Command descriptor for a
  * slash command option that targets a chat input.
  */
