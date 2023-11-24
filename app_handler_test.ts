@@ -4,7 +4,7 @@ import {
   ApplicationCommandType,
   type RESTPostAPIApplicationCommandsJSONBody,
 } from "./deps.ts";
-import { toAPI } from "./app.ts";
+import { toAPI } from "./app_handler.ts";
 
 // Example used:
 // https://discord.com/developers/docs/interactions/application-commands#example-walkthrough

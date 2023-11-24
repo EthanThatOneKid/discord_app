@@ -1,2 +1,2 @@
 export * from "./app.ts";
-export * from "./verify.ts";
+export * from "./app_handler.ts";

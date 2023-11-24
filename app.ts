@@ -1,19 +1,14 @@
 import type {
   APIApplicationCommandBasicOption,
   APIApplicationCommandInteractionWrapper,
-  APIApplicationCommandOption,
   APIChatInputApplicationCommandInteractionData,
   APIInteractionResponse,
   APIMessageApplicationCommandInteractionData,
   APIUserApplicationCommandInteractionData,
-  RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from "./deps.ts";
-import {
-  ApplicationCommandOptionType,
-  ApplicationCommandType,
-} from "./deps.ts";
+import { ApplicationCommandOptionType } from "./deps.ts";
 
 // TODO: Rename all generic `T`s.
 
@@ -112,7 +107,7 @@ export type AppChatInputBasicOption = Omit<
 /**
  * AppSchema is the configuration of a Discord Application Command.
  */
-type AppSchema =
+export type AppSchema =
   | AppUserCommandSchema
   | AppMessageCommandSchema
   | AppChatInputCommandSchema<AppChatInputBasicOption>;
@@ -226,92 +221,3 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
       >,
     ) => Promisable<APIInteractionResponse>
   : never;
-
-export function makeHandler<TAppSchema extends AppSchema>(
-  _: TAppSchema,
-  app: App<TAppSchema>,
-): App<TAppSchema> {
-  // Noop.
-  return app;
-}
-
-/**
- * toAPIOptions converts a schema's options to valid Discord Application Command
- * options.
- */
-export function toAPIOptions(
-  schema: AppChatInputCommandSchema<AppChatInputBasicOption>["chatInput"],
-): APIApplicationCommandOption[] | undefined {
-  if ("options" in schema) {
-    if (schema.options === undefined) {
-      return undefined;
-    }
-
-    return Object.entries(schema.options).map(([name, option]) => ({
-      ...option,
-      type: option.type as number,
-      name,
-    }));
-  }
-
-  if ("subcommands" in schema) {
-    return Object.entries(schema.subcommands).map(([name, subcommand]) => {
-      const { options: _, ...options } = subcommand;
-      return {
-        ...options,
-        name,
-        type: ApplicationCommandOptionType.Subcommand as number,
-        options: toAPIOptions({ ...subcommand, name }),
-      };
-    });
-  }
-
-  if ("groups" in schema) {
-    return Object.entries(schema.groups).map(([name, group]) => {
-      const { subcommands: _, ...options } = group;
-      return {
-        ...options,
-        name,
-        type: ApplicationCommandOptionType.SubcommandGroup as number,
-        options: toAPIOptions({ ...group, name }),
-      };
-    });
-  }
-
-  return undefined;
-}
-
-/**
- * toAPI converts an AppSchema to a registerable Discord Application Command descriptor.
- */
-export function toAPI(
-  schema: AppSchema,
-): RESTPostAPIApplicationCommandsJSONBody {
-  if ("user" in schema) {
-    return {
-      ...schema.user,
-      type: ApplicationCommandType.User,
-    };
-  }
-
-  if ("message" in schema) {
-    return {
-      ...schema.message,
-      type: ApplicationCommandType.Message,
-    };
-  }
-
-  const result: RESTPostAPIApplicationCommandsJSONBody = {
-    ...schema.chatInput,
-    type: ApplicationCommandType.ChatInput,
-    options: toAPIOptions(schema.chatInput),
-  };
-  if ("groups" in result) {
-    delete result.groups;
-  }
-  if ("subcommands" in result) {
-    delete result.subcommands;
-  }
-
-  return result;
-}
