@@ -125,7 +125,7 @@ export type AppSchema =
 /**
  * Promisable is a utility type that represents a type and itself wrapped in a promise.
  */
-type Promisable<T> = T | Promise<T>;
+export type Promisable<T> = T | Promise<T>;
 
 /**
  * RuntimeTypeOf is a utility type that maps a schema option type to a runtime
@@ -161,6 +161,22 @@ export type RuntimeTypeMapOf<
     [optionName in keyof T["options"]]: RuntimeTypeOf<T["options"][optionName]>;
   }
   : undefined;
+
+/**
+ * AppMessageInteractionOf is a utility type that infers the type of an
+ * interaction's data based on the interaction's schema.
+ */
+export type AppMessageInteraction = APIApplicationCommandInteractionWrapper<
+  APIMessageApplicationCommandInteractionData
+>;
+
+/**
+ * AppUserInteractionOf is a utility type that infers the type of an
+ * interaction's data based on the interaction's schema.
+ */
+export type AppUserInteraction = APIApplicationCommandInteractionWrapper<
+  APIUserApplicationCommandInteractionData
+>;
 
 /**
  * AppChatInputInteractionOf is a utility type that infers the type of an interaction's
@@ -216,18 +232,10 @@ export type App<TAppSchema extends AppSchema> = TAppSchema extends
         interaction: AppChatInputInteractionOf<TAppSchema["chatInput"]>,
       ) => Promisable<APIInteractionResponse>
     : never)
-  : TAppSchema extends AppUserCommandSchema ? (
-      interaction: APIApplicationCommandInteractionWrapper<
-        APIUserApplicationCommandInteractionData & {
-          name: TAppSchema["user"]["name"];
-        }
-      >,
-    ) => Promisable<APIInteractionResponse>
   : TAppSchema extends AppMessageCommandSchema ? (
-      interaction: APIApplicationCommandInteractionWrapper<
-        APIMessageApplicationCommandInteractionData & {
-          name: TAppSchema["message"]["name"];
-        }
-      >,
+      interaction: AppMessageInteraction,
+    ) => Promisable<APIInteractionResponse>
+  : TAppSchema extends AppUserCommandSchema ? (
+      interaction: AppUserInteraction,
     ) => Promisable<APIInteractionResponse>
   : never;
