@@ -26,7 +26,7 @@ import type {
   ParsedAppChatInputCommandOptions,
   Promisable,
 } from "./app.ts";
-import { registerApplicationCommand } from "./api.ts";
+import { registerApplicationCommand } from "./discord_api.ts";
 import { verify } from "./verify.ts";
 
 /**

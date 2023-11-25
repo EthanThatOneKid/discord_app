@@ -6,6 +6,23 @@ import type { RESTPostAPIApplicationCommandsJSONBody } from "./deps.ts";
 export const DISCORD_API_URL = "https://discord.com/api/v10";
 
 /**
+ * makeBotAuthorization makes the Authorization header for a bot.
+ */
+export function makeBotAuthorization(botToken: string) {
+  return botToken.startsWith("Bot ") ? botToken : `Bot ${botToken}`;
+}
+
+/**
+ * makeRegisterCommandsURL makes the URL to register a Discord application command.
+ */
+export function makeRegisterCommandsURL(
+  clientID: string,
+  base = DISCORD_API_URL,
+) {
+  return new URL(`${base}/applications/${clientID}/commands`);
+}
+
+/**
  * RegisterApplicationCommandOptions are the options for registering a Discord
  * application command.
  */
@@ -49,19 +66,4 @@ export async function registerApplicationCommand(
   }
 }
 
-/**
- * makeBotAuthorization makes the Authorization header for a bot.
- */
-export function makeBotAuthorization(botToken: string) {
-  return botToken.startsWith("Bot ") ? botToken : `Bot ${botToken}`;
-}
-
-/**
- * makeRegisterCommandsURL makes the URL to register a Discord application command.
- */
-export function makeRegisterCommandsURL(
-  clientID: string,
-  base = DISCORD_API_URL,
-) {
-  return new URL(`${base}/applications/${clientID}/commands`);
-}
+// TODO: Expose more convenient functions for working with the Discord API.
