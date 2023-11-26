@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.207.0/assert/mod.ts";
+import { assertEquals } from "./developer_deps.ts";
 import {
   ApplicationCommandOptionType,
   ApplicationCommandType,
@@ -145,53 +145,52 @@ Deno.test("toAPI", () => {
           },
         ],
       },
-      // TODO: Finish converting JSON syntax to formatted TypeScript.
       {
-        "description": "Get or edit permissions for a role",
-        "name": "role",
-        "options": [
+        type: ApplicationCommandOptionType.SubcommandGroup,
+        name: "role",
+        description: "Get or edit permissions for a role",
+        options: [
           {
-            "description": "Get permissions for a role",
-            "name": "get",
-            "options": [
+            type: ApplicationCommandOptionType.Subcommand,
+            name: "get",
+            description: "Get permissions for a role",
+            options: [
               {
-                "description": "The role to get",
-                "name": "role",
-                "required": true,
-                "type": 8,
+                type: ApplicationCommandOptionType.Role,
+                name: "role",
+                description: "The role to get",
+                required: true,
               },
               {
-                "description":
+                type: ApplicationCommandOptionType.Channel,
+                name: "channel",
+                description:
                   "The channel permissions to get. If omitted, the guild permissions will be returned",
-                "name": "channel",
-                "required": false,
-                "type": 7,
+                required: false,
               },
             ],
-            "type": 1,
           },
           {
-            "description": "Edit permissions for a role",
-            "name": "edit",
-            "options": [
+            type: ApplicationCommandOptionType.Subcommand,
+            name: "edit",
+            description: "Edit permissions for a role",
+            options: [
               {
-                "description": "The role to edit",
-                "name": "role",
-                "required": true,
-                "type": 8,
+                type: ApplicationCommandOptionType.Role,
+                name: "role",
+                description: "The role to edit",
+                required: true,
               },
               {
-                "description":
+                type: ApplicationCommandOptionType.Channel,
+                name: "channel",
+                description:
                   "The channel permissions to edit. If omitted, the guild permissions will be edited",
-                "name": "channel",
-                "required": false,
-                "type": 7,
+                required: false,
               },
             ],
-            "type": 1,
           },
         ],
-        "type": 2,
       },
     ],
   };
