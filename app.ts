@@ -7,8 +7,8 @@ import type {
   APIUserApplicationCommandInteractionData,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
-} from "./deps.ts";
-import { ApplicationCommandOptionType } from "./deps.ts";
+} from "./discord_api_types.ts";
+import { ApplicationCommandOptionType } from "./discord_api_types.ts";
 
 // TODO: Rename all generic `T`s.
 

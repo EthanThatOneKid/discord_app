@@ -1,4 +1,4 @@
-import type { RESTPostAPIApplicationCommandsJSONBody } from "./deps.ts";
+import type { RESTPostAPIApplicationCommandsJSONBody } from "./discord_api_types.ts";
 
 /**
  * DISCORD_API_URL is the base URL for the Discord API.

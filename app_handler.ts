@@ -1,16 +1,16 @@
 import type {
+  APIApplicationCommandInteractionDataOption,
   APIApplicationCommandOption,
   APIInteraction,
   APIInteractionResponse,
   RESTPostAPIApplicationCommandsJSONBody,
-} from "./deps.ts";
+} from "./discord_api_types.ts";
 import {
-  APIApplicationCommandInteractionDataOption,
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
   InteractionType,
-} from "./deps.ts";
+} from "./discord_api_types.ts";
 import type {
   App,
   AppChatInputBasicOption,
