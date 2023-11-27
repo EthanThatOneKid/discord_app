@@ -23,94 +23,21 @@ Create Discord application commands.
 
 In `discord_app`,
 [message commands](https://discord.com/developers/docs/interactions/application-commands#message-commands)
-are created and served like so:
-
-```ts
-import { createApp, InteractionResponseType } from "./mod.ts";
-
-if (import.meta.main) {
-  Deno.serve(
-    await createApp(
-      {
-        applicationID: Deno.env.get("DENO_APPLICATION_ID")!,
-        publicKey: Deno.env.get("DENO_PUBLIC_KEY")!,
-        register: {
-          token: Deno.env.get("DENO_TOKEN")!,
-        },
-        invite: {
-          path: "/invite",
-          scopes: ["applications.commands"],
-        },
-        schema: {
-          message: {
-            name: "Your message command name",
-          },
-        },
-      },
-      (interaction) => {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: "Message content: " + interaction.data?.content,
-          },
-        };
-      },
-    ),
-  );
-}
-```
+are created and served as demonstrated in
+[`/examples/bookmark.ts`](./examples/bookmark.ts).
 
 ### User commands
 
 In `discord_app`,
 [user commands](https://discord.com/developers/docs/interactions/application-commands#user-commands)
-are created and served like so:
-
-```ts
-import { createApp, InteractionResponseType } from "./mod.ts";
-
-if (import.meta.main) {
-  Deno.serve(
-    await createApp(
-      {
-        applicationID: Deno.env.get("DENO_APPLICATION_ID")!,
-        publicKey: Deno.env.get("DENO_PUBLIC_KEY")!,
-        register: {
-          token: Deno.env.get("DENO_TOKEN")!,
-        },
-        invite: {
-          path: "/invite",
-          scopes: ["applications.commands"],
-        },
-        schema: {
-          user: {
-            name: "Your user command name",
-          },
-        },
-      },
-      (interaction) => {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: "User: " +
-              interaction.data?.resolved.users[interaction.data.target_id]
-                .username,
-          },
-        };
-      },
-    ),
-  );
-}
-```
+are created and served as demonstrated in
+[`/examples/high_five.ts`](./examples/high_five.ts).
 
 ### Chat input commands
 
 In `discord_app`, chat input commands, also known as "slash commands", are
-created and served like so:
-
-```ts
-// TODO: Add example!
-```
+created and served as demonstrated in
+[`/examples/permissions.ts`](./examples/permissions.ts).
 
 ## Contributing
 
