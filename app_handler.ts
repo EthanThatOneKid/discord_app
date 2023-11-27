@@ -246,7 +246,7 @@ type AppHandlerErrorBehaviorOptions<T> =
  * DEFAULT_RESPONSE_ERROR_BEHAVIOR is the default error behavior.
  */
 const DEFAULT_RESPONSE_ERROR_BEHAVIOR: AppHandlerErrorBehaviorOptions<
-  Response
+  APIInteractionResponse
 > = {
   throw: (error) => error,
 };
@@ -296,12 +296,12 @@ export interface AppHandlerInviteOptions {
   /**
    * scopes is the list of OAuth2 scopes to request.
    */
-  scopes: string[];
+  scopes?: string[];
 
   /**
    * permissions is the list of permissions to request.
    */
-  permissions: string[];
+  permissions?: string[];
 }
 
 /**
@@ -313,11 +313,16 @@ export function makeInviteURL(
 ): URL {
   const inviteURL = new URL("https://discord.com/oauth2/authorize");
   inviteURL.searchParams.set("client_id", clientID);
-  inviteURL.searchParams.set("scope", options.scopes.join(" "));
-  inviteURL.searchParams.set(
-    "permissions",
-    options.permissions.join(" "),
-  );
+  if (options.scopes !== undefined) {
+    inviteURL.searchParams.set("scope", options.scopes.join(" "));
+  }
+
+  if (options.permissions !== undefined) {
+    inviteURL.searchParams.set(
+      "permissions",
+      options.permissions.join(" "),
+    );
+  }
   return inviteURL;
 }
 
@@ -351,32 +356,26 @@ export interface AppHandlerOptions<T> {
    * invite is the configuration of the invite redirect. If not provided, the
    * invite endpoint will not be handled.
    */
-  invite?: {
-    /**
-     * path is the path to the application command invite endpoint. Includes
-     * slash prefix.
-     */
-    path: string;
+  invite?: AppHandlerInviteOptions;
 
-    /**
-     * scopes is the list of OAuth2 scopes to request.
-     */
-    scopes: string[];
+  /**
+   * errorBehavior is the configuration of the error behavior.
+   */
+  errorBehavior?: AppHandlerErrorBehaviorOptions<APIInteractionResponse>;
 
-    /**
-     * permissions is the list of permissions to request.
-     */
-    permissions: string[];
-  };
+  // TODO: Document where applicationID and publicKey are being used.
 
   /**
    * applicationID is the ID of the application that owns the application command.
-   * The application ID is the same as the client ID.
+   * The application ID is the same as the client ID. The application ID is required
+   * in order to register the application command or to redirect to the invite
+   * endpoint.
    */
-  applicationID: string;
+  applicationID?: string;
 
   /**
-   * publicKey is the public key of the application command.
+   * publicKey is the public key of the application command. The public key is
+   * required in order to verify the request.
    */
   publicKey: string;
 
@@ -384,12 +383,7 @@ export interface AppHandlerOptions<T> {
    * clientSecret is the client secret of the application that owns the application
    * command.
    */
-  //   clientSecret: string;
-
-  /**
-   * errorBehavior is the configuration of the error behavior.
-   */
-  errorBehavior: AppHandlerErrorBehaviorOptions<APIInteractionResponse>;
+  // clientSecret: string;
 }
 
 /**
@@ -406,6 +400,10 @@ export async function createApp<TAppSchema extends AppSchema>(
   handlers: App<TAppSchema>,
 ): Promise<(r: Request) => Promise<Response>> {
   if (options.register) {
+    if (options.applicationID === undefined) {
+      throw new Error("applicationID is required to register the command");
+    }
+
     await registerApplicationCommand({
       applicationID: options.applicationID,
       token: options.register.token,
@@ -419,8 +417,16 @@ export async function createApp<TAppSchema extends AppSchema>(
   return async function (request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (options.invite) {
-      const invitePath = `${basePath}${options.invite.path}`;
+      const invitePath = basePath.endsWith("/")
+        ? `${basePath.slice(0, -1)}${options.invite.path}`
+        : `${basePath}${options.invite.path}`;
       if (url.pathname === invitePath) {
+        if (options.applicationID === undefined) {
+          throw new Error(
+            "applicationID is required to redirect to the invite endpoint",
+          );
+        }
+
         const inviteURL = makeInviteURL(options.applicationID, options.invite);
         return Response.redirect(inviteURL, 302);
       }
