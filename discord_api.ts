@@ -16,10 +16,15 @@ export function makeBotAuthorization(botToken: string) {
  * makeRegisterCommandsURL makes the URL to register a Discord application command.
  */
 export function makeRegisterCommandsURL(
-  clientID: string,
+  applicationID: string,
+  guildID?: string,
   base = DISCORD_API_URL,
 ) {
-  return new URL(`${base}/applications/${clientID}/commands`);
+  return new URL(
+    `${base}/applications/${applicationID}/commands${
+      guildID !== undefined ? `/guilds/${guildID}` : ""
+    }`,
+  );
 }
 
 /**
@@ -31,6 +36,11 @@ export interface RegisterApplicationCommandOptions {
    * applicationID is the ID of the Discord application.
    */
   applicationID: string;
+
+  /**
+   * guildID is the ID of the Discord guild to register the command in.
+   */
+  guildID?: string;
 
   /**
    * token is the token of the Discord bot.
@@ -49,7 +59,7 @@ export interface RegisterApplicationCommandOptions {
 export async function registerApplicationCommand(
   options: RegisterApplicationCommandOptions,
 ): Promise<void> {
-  const url = makeRegisterCommandsURL(options.applicationID);
+  const url = makeRegisterCommandsURL(options.applicationID, options.guildID);
   const response = await fetch(url, {
     method: "POST",
     headers: new Headers([

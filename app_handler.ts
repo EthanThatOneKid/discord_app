@@ -350,6 +350,11 @@ export interface AppHandlerOptions<T> {
      * token is the token of the application command.
      */
     token: string;
+
+    /**
+     * guildID is the ID of the guild to register the application command in.
+     */
+    guildID?: string;
   };
 
   /**
@@ -406,6 +411,7 @@ export async function createApp<TAppSchema extends AppSchema>(
 
     await registerApplicationCommand({
       applicationID: options.applicationID,
+      guildID: options.register.guildID,
       token: options.register.token,
       applicationCommand: toAPI(options.schema),
     });
