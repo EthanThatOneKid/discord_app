@@ -26,8 +26,8 @@ import type {
   ParsedAppChatInputCommandOptions,
   Promisable,
 } from "./app.ts";
-import { registerApplicationCommand } from "./discord_api.ts";
-import { verify } from "./verify.ts";
+import type { DiscordAPIInterface } from "./discord_api.ts";
+import { DiscordAPI } from "./discord_api.ts";
 
 /**
  * toAPIOptions converts a schema's options to valid Discord Application Command
@@ -124,36 +124,48 @@ export function fromAPIChatInputOptions(
   }
 
   if ("options" in schema) {
+    // Options are required if present in the schema.
     if (schema.options === undefined) {
       if (options !== undefined && options.length !== 0) {
         throw new Error("Invalid options");
       }
 
+      // No options with no schema options is valid.
       return {};
     }
 
+    // No options with schema options is invalid.
     const schemaOptionNames = Object.keys(schema.options);
     if (
-      schema.options !== undefined &&
-      options!.length !== schemaOptionNames.length
+      (options === undefined || options.length === 0) &&
+      schemaOptionNames.length !== 0
     ) {
       throw new Error("Invalid options");
     }
-    if (schemaOptionNames.length === 0) {
-      return {};
+
+    // Options are validated against the schema.
+    for (const option of options!) {
+      if (!schemaOptionNames.includes(option.name)) {
+        throw new Error(`Unexpected option ${option.name}`);
+      }
+
+      if (option.type !== schema.options[option.name].type) {
+        throw new Error(
+          `Unexpected type ${option.type} for option ${option.name}`,
+        );
+      }
     }
 
+    for (const optionName of schemaOptionNames) {
+      const option = schema.options![optionName];
+      if (option.required && !options!.some((o) => o.name === optionName)) {
+        throw new Error(`Missing required option ${optionName}`);
+      }
+    }
+
+    // Options are parsed.
     const parsedOptions: ParsedAppChatInputCommandOptions["parsedOptions"] = {};
     for (const option of options!) {
-      const optionSchema = schema.options[option.name];
-      if (optionSchema === undefined) {
-        throw new Error("Invalid option");
-      }
-
-      if (optionSchema.type !== option.type) {
-        throw new Error("Invalid option");
-      }
-
       switch (option.type) {
         case ApplicationCommandOptionType.String:
         case ApplicationCommandOptionType.Boolean:
@@ -385,6 +397,11 @@ export interface AppHandlerOptions<T> {
   publicKey: string;
 
   /**
+   * api is the Discord API interface. Defaults to the real Discord API.
+   */
+  api?: DiscordAPIInterface;
+
+  /**
    * clientSecret is the client secret of the application that owns the application
    * command.
    */
@@ -404,12 +421,13 @@ export async function createApp<TAppSchema extends AppSchema>(
   options: AppHandlerOptions<TAppSchema>,
   handlers: App<TAppSchema>,
 ): Promise<(r: Request) => Promise<Response>> {
+  const api = options.api ?? new DiscordAPI();
   if (options.register) {
     if (options.applicationID === undefined) {
       throw new Error("applicationID is required to register the command");
     }
 
-    await registerApplicationCommand({
+    await api.registerApplicationCommand({
       applicationID: options.applicationID,
       guildID: options.register.guildID,
       token: options.register.token,
@@ -438,7 +456,10 @@ export async function createApp<TAppSchema extends AppSchema>(
       }
     }
 
-    const { body, error } = await verify(request, options.publicKey);
+    const { body, error } = await api.verify({
+      request,
+      publicKey: options.publicKey,
+    });
     if (error) {
       return error;
     }

@@ -4,16 +4,16 @@
 
 Create Discord application commands.
 
-> **NOTE**
->
-> The `discord_app` library is currently only known to be available in Deno.
-
-## Usage
-
 > Application commands are native ways to interact with apps in the Discord
 > client. There are 3 types of commands accessible in different interfaces: the
 > chat input, a message's context menu (top-right menu or right-clicking in a
 > message), and a user's context menu (right-clicking on a user).
+
+## Usage
+
+> **NOTE**
+>
+> The `discord_app` library is currently only known to be available in Deno.
 
 ### Examples
 
