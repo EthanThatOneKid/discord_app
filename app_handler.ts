@@ -416,9 +416,9 @@ export async function createApp<TAppSchema extends AppSchema>(
     DEFAULT_RESPONSE_ERROR_BEHAVIOR;
   return async function (request: Request): Promise<Response> {
     const url = new URL(request.url);
-    if (options.invite) {
-      const invitePath = basePath.endsWith("/")
-        ? `${basePath.slice(0, -1)}${options.invite.path}`
+    if (options.invite && request.method === "GET") {
+      const invitePath = basePath === "/"
+        ? options.invite.path
         : `${basePath}${options.invite.path}`;
       if (url.pathname === invitePath) {
         if (options.applicationID === undefined) {

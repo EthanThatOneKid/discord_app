@@ -1,10 +1,12 @@
 # discord_app
 
+[![deno doc](https://doc.deno.land/badge.svg)](https://deno.land/x/discord_app)
+
 Create Discord application commands.
 
 > **NOTE**
 >
-> The `discord_app` library is currently only in Deno.
+> The `discord_app` library is currently only known to be available in Deno.
 
 ## Usage
 
@@ -40,6 +42,7 @@ if (import.meta.main) {
         },
         invite: {
           path: "/invite",
+          scopes: ["applications.commands"],
         },
       },
       () => {
