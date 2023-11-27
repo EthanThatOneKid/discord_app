@@ -4,7 +4,7 @@ import {
   ApplicationCommandType,
   type RESTPostAPIApplicationCommandsJSONBody,
 } from "./deps.ts";
-import { toAPI } from "./app_handler.ts";
+import { toAPI, withErrorBehavior } from "./app_handler.ts";
 
 // Example used:
 // https://discord.com/developers/docs/interactions/application-commands#example-walkthrough
@@ -196,4 +196,19 @@ Deno.test("toAPI", () => {
   };
 
   assertEquals(actual, expected);
+});
+
+Deno.test("withErrorBehavior", async () => {
+  const actual = await withErrorBehavior<Response>(
+    Promise.reject(new Error("test")),
+    {
+      send(error: Error) {
+        return new Response(error.message, { status: 500 });
+      },
+    },
+  );
+
+  assertEquals(actual instanceof Response, true);
+  assertEquals(actual.status, 500);
+  assertEquals(await actual.text(), "test");
 });

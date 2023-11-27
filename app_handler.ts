@@ -226,6 +226,64 @@ export function fromAPIChatInputOptions(
 }
 
 /**
+ * AppHandlerErrorBehaviorOptions is the configuration of the error behavior.
+ */
+type AppHandlerErrorBehaviorOptions<T> =
+  | {
+    /**
+     * throw is the function used to throw an error.
+     */
+    throw: (error: Error) => Error | Promise<Error>;
+  }
+  | {
+    /**
+     * send is the function used to send an error response.
+     */
+    send: (error: Error) => T | Promise<T>;
+  };
+
+/**
+ * DEFAULT_RESPONSE_ERROR_BEHAVIOR is the default error behavior.
+ */
+const DEFAULT_RESPONSE_ERROR_BEHAVIOR: AppHandlerErrorBehaviorOptions<
+  Response
+> = {
+  throw: (error) => error,
+};
+
+/**
+ * withErrorBehavior wraps a promise with error behavior.
+ */
+export async function withErrorBehavior<T>(
+  /**
+   * promise can throw an error. promise can be an error.
+   */
+  promise: Promise<T> | Error,
+  /**
+   * errorBehavior is the error behavior.
+   */
+  errorBehavior: AppHandlerErrorBehaviorOptions<T>,
+): Promise<T> {
+  try {
+    if (promise instanceof Error) {
+      throw promise;
+    }
+
+    return await promise;
+  } catch (error) {
+    if ("throw" in errorBehavior) {
+      throw await errorBehavior.throw(error);
+    }
+
+    if ("send" in errorBehavior) {
+      return await errorBehavior.send(error);
+    }
+  }
+
+  throw new Error("Invalid error behavior");
+}
+
+/**
  * AppHandlerInviteOptions is the configuration of the invite redirect.
  */
 export interface AppHandlerInviteOptions {
@@ -321,7 +379,17 @@ export interface AppHandlerOptions<T> {
    * publicKey is the public key of the application command.
    */
   publicKey: string;
+
+  /**
+   * errorBehavior is the configuration of the error behavior.
+   */
+  errorBehavior: AppHandlerErrorBehaviorOptions<APIInteractionResponse>;
 }
+
+/**
+ * ERROR_INVALID_REQUEST is an error that indicates that the request is invalid.
+ */
+const ERROR_INVALID_REQUEST = new Error("Invalid request");
 
 /**
  * createApp creates a registers a Discord application command and returns a
@@ -338,6 +406,8 @@ export async function createApp<TAppSchema extends AppSchema>(
     applicationCommand: app,
   });
   const basePath = options.path ?? "/";
+  const errorBehavior = options.errorBehavior ??
+    DEFAULT_RESPONSE_ERROR_BEHAVIOR;
   return async function (request: Request): Promise<Response> {
     const url = new URL(request.url);
     if (options.invite) {
@@ -362,7 +432,11 @@ export async function createApp<TAppSchema extends AppSchema>(
       case InteractionType.ApplicationCommand: {
         if (interaction.data.type === ApplicationCommandType.Message) {
           if (!("message" in options.schema)) {
-            return new Response("Invalid request", { status: 400 });
+            const response = await withErrorBehavior(
+              ERROR_INVALID_REQUEST,
+              errorBehavior,
+            );
+            return Response.json(response);
           }
 
           return Response.json(
@@ -376,7 +450,11 @@ export async function createApp<TAppSchema extends AppSchema>(
 
         if (interaction.data.type === ApplicationCommandType.User) {
           if (!("user" in options.schema)) {
-            return new Response("Invalid request", { status: 400 });
+            const response = await withErrorBehavior(
+              ERROR_INVALID_REQUEST,
+              errorBehavior,
+            );
+            return Response.json(response);
           }
 
           return Response.json(
@@ -390,7 +468,11 @@ export async function createApp<TAppSchema extends AppSchema>(
 
         if (interaction.data.type === ApplicationCommandType.ChatInput) {
           if (!("chatInput" in options.schema)) {
-            return new Response("Invalid request", { status: 400 });
+            const response = await withErrorBehavior(
+              ERROR_INVALID_REQUEST,
+              errorBehavior,
+            );
+            return Response.json(response);
           }
 
           const { subcommandGroupName, subcommandName, parsedOptions } =
@@ -405,8 +487,8 @@ export async function createApp<TAppSchema extends AppSchema>(
                   & AppSubcommandGroupsSchema<AppChatInputBasicOption>
                   & AppChatInputSchemaBase;
               }>)[subcommandGroupName][subcommandName];
-              return Response.json(
-                await handleInteraction(
+              const response = await withErrorBehavior(
+                Promise.resolve(handleInteraction(
                   {
                     ...interaction,
                     data: { ...interaction.data, parsedOptions },
@@ -414,8 +496,10 @@ export async function createApp<TAppSchema extends AppSchema>(
                     & AppOptionsSchema<AppChatInputBasicOption>
                     & Omit<AppChatInputSchemaBase, "name">
                   >,
-                ),
+                )),
+                errorBehavior,
               );
+              return Response.json(response);
             }
 
             const handleInteraction = (handlers as unknown as App<{
@@ -423,8 +507,8 @@ export async function createApp<TAppSchema extends AppSchema>(
                 & AppSubcommandsSchema<AppChatInputBasicOption>
                 & AppChatInputSchemaBase;
             }>)[subcommandName];
-            return Response.json(
-              await handleInteraction(
+            const response = await withErrorBehavior(
+              Promise.resolve(handleInteraction(
                 {
                   ...interaction,
                   data: { ...interaction.data, parsedOptions },
@@ -432,8 +516,10 @@ export async function createApp<TAppSchema extends AppSchema>(
                   & AppOptionsSchema<AppChatInputBasicOption>
                   & Omit<AppChatInputSchemaBase, "name">
                 >,
-              ),
+              )),
+              errorBehavior,
             );
+            return Response.json(response);
           }
 
           const handleInteraction = handlers as unknown as App<{
@@ -441,8 +527,8 @@ export async function createApp<TAppSchema extends AppSchema>(
               & AppOptionsSchema<AppChatInputBasicOption>
               & AppChatInputSchemaBase;
           }>;
-          return Response.json(
-            await handleInteraction(
+          const response = await withErrorBehavior(
+            Promise.resolve(handleInteraction(
               {
                 ...interaction,
                 data: { ...interaction.data, parsedOptions },
@@ -450,8 +536,10 @@ export async function createApp<TAppSchema extends AppSchema>(
                 & AppOptionsSchema<AppChatInputBasicOption>
                 & Omit<AppChatInputSchemaBase, "name">
               >,
-            ),
+            )),
+            errorBehavior,
           );
+          return Response.json(response);
         }
 
         return new Response("Unsupported command type", { status: 400 });
