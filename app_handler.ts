@@ -226,6 +226,44 @@ export function fromAPIChatInputOptions(
 }
 
 /**
+ * AppHandlerInviteOptions is the configuration of the invite redirect.
+ */
+export interface AppHandlerInviteOptions {
+  /**
+   * path is the path to the application command invite endpoint. Includes
+   * slash prefix.
+   */
+  path: string;
+
+  /**
+   * scopes is the list of OAuth2 scopes to request.
+   */
+  scopes: string[];
+
+  /**
+   * permissions is the list of permissions to request.
+   */
+  permissions: string[];
+}
+
+/**
+ * makeInviteURL creates an invite URL for the application command.
+ */
+export function makeInviteURL(
+  clientID: string,
+  options: AppHandlerInviteOptions,
+): URL {
+  const inviteURL = new URL("https://discord.com/oauth2/authorize");
+  inviteURL.searchParams.set("client_id", clientID);
+  inviteURL.searchParams.set("scope", options.scopes.join(" "));
+  inviteURL.searchParams.set(
+    "permissions",
+    options.permissions.join(" "),
+  );
+  return inviteURL;
+}
+
+/**
  * AppHandlerOptions is the configuration of
  */
 export interface AppHandlerOptions<T> {
@@ -235,14 +273,32 @@ export interface AppHandlerOptions<T> {
   schema: T;
 
   /**
-   * path is the path to the application command handler endpoint.
+   * path is the path to the application command handler endpoint. Includes
+   * slash prefix. Defaults to "/".
    */
   path?: string;
 
   /**
-   * invitePath is the path to the application command invite endpoint.
+   * invite is the configuration of the invite redirect. If not provided, the
+   * invite endpoint will not be handled.
    */
-  invitePath?: string;
+  invite?: {
+    /**
+     * path is the path to the application command invite endpoint. Includes
+     * slash prefix.
+     */
+    path: string;
+
+    /**
+     * scopes is the list of OAuth2 scopes to request.
+     */
+    scopes: string[];
+
+    /**
+     * permissions is the list of permissions to request.
+     */
+    permissions: string[];
+  };
 
   /**
    * token is the token of the application command.
@@ -281,7 +337,17 @@ export async function createApp<TAppSchema extends AppSchema>(
     token: options.token,
     applicationCommand: app,
   });
+  const basePath = options.path ?? "/";
   return async function (request: Request): Promise<Response> {
+    const url = new URL(request.url);
+    if (options.invite) {
+      const invitePath = `${basePath}${options.invite.path}`;
+      if (url.pathname === invitePath) {
+        const inviteURL = makeInviteURL(options.applicationID, options.invite);
+        return Response.redirect(inviteURL, 302);
+      }
+    }
+
     const { body, error } = await verify(request, options.publicKey);
     if (error) {
       return error;
