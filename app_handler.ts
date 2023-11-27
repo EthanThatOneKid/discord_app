@@ -337,6 +337,17 @@ export interface AppHandlerOptions<T> {
   path?: string;
 
   /**
+   * register is the configuration of the application command registration. If
+   * not provided, the application command will not be registered.
+   */
+  register?: {
+    /**
+     * token is the token of the application command.
+     */
+    token: string;
+  };
+
+  /**
    * invite is the configuration of the invite redirect. If not provided, the
    * invite endpoint will not be handled.
    */
@@ -359,26 +370,21 @@ export interface AppHandlerOptions<T> {
   };
 
   /**
-   * token is the token of the application command.
-   */
-  token: string;
-
-  /**
    * applicationID is the ID of the application that owns the application command.
    * The application ID is the same as the client ID.
    */
   applicationID: string;
 
   /**
+   * publicKey is the public key of the application command.
+   */
+  publicKey: string;
+
+  /**
    * clientSecret is the client secret of the application that owns the application
    * command.
    */
   //   clientSecret: string;
-
-  /**
-   * publicKey is the public key of the application command.
-   */
-  publicKey: string;
 
   /**
    * errorBehavior is the configuration of the error behavior.
@@ -399,12 +405,14 @@ export async function createApp<TAppSchema extends AppSchema>(
   options: AppHandlerOptions<TAppSchema>,
   handlers: App<TAppSchema>,
 ): Promise<(r: Request) => Promise<Response>> {
-  const app = toAPI(options.schema);
-  await registerApplicationCommand({
-    applicationID: options.applicationID,
-    token: options.token,
-    applicationCommand: app,
-  });
+  if (options.register) {
+    await registerApplicationCommand({
+      applicationID: options.applicationID,
+      token: options.register.token,
+      applicationCommand: toAPI(options.schema),
+    });
+  }
+
   const basePath = options.path ?? "/";
   const errorBehavior = options.errorBehavior ??
     DEFAULT_RESPONSE_ERROR_BEHAVIOR;
