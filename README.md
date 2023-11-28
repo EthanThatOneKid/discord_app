@@ -2,7 +2,7 @@
 
 [![deno doc](https://doc.deno.land/badge.svg)](https://deno.land/x/discord_app)
 
-Create Discord application commands.
+Define and serve Discord application commands.
 
 > Application commands are native ways to interact with apps in the Discord
 > client. There are 3 types of commands accessible in different interfaces: the
@@ -11,7 +11,7 @@ Create Discord application commands.
 
 ## Usage
 
-> **NOTE**
+> [!NOTE]
 >
 > The `discord_app` library is currently only known to be available in Deno.
 
