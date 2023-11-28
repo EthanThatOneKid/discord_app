@@ -10,8 +10,6 @@ import type {
 } from "./discord_api_types.ts";
 import { ApplicationCommandOptionType } from "./discord_api_types.ts";
 
-// TODO: Rename all generic `T`s.
-
 /**
  * AppUserCommandSchema is a Discord Application Command descriptor for a slash
  * command that targets a user.
@@ -53,10 +51,10 @@ export type AppChatInputSchemaBase = Omit<
 /**
  * AppOptionsSchema is an option descriptor for a chat input command's options.
  */
-export interface AppOptionsSchema<T> {
-  // TODO: Infer choices.
+export interface AppOptionsSchema<TBasicOption> {
+  // TODO: Support type-safe choices.
   options?: {
-    [optionName in string]: T;
+    [optionName in string]: TBasicOption;
   };
 }
 
@@ -64,10 +62,10 @@ export interface AppOptionsSchema<T> {
  * AppSubcommandsSchema is an option descriptor for a slash command's
  * subcommands.
  */
-export interface AppSubcommandsSchema<T> {
+export interface AppSubcommandsSchema<TBasicOption> {
   subcommands: {
     [subcommandName: string]:
-      & AppOptionsSchema<T>
+      & AppOptionsSchema<TBasicOption>
       & Omit<AppChatInputSchemaBase, "name">;
   };
 }
@@ -76,10 +74,10 @@ export interface AppSubcommandsSchema<T> {
  * SubcommandGroupsCollection is an option descriptor for a slash command's
  * subcommand groups.
  */
-export interface AppSubcommandGroupsSchema<T> {
+export interface AppSubcommandGroupsSchema<TBasicOption> {
   groups: {
     [groupName: string]:
-      & AppSubcommandsSchema<T>
+      & AppSubcommandsSchema<TBasicOption>
       & Omit<AppChatInputSchemaBase, "name">;
   };
 }
@@ -88,11 +86,11 @@ export interface AppSubcommandGroupsSchema<T> {
  * AppChatInputCommandSchema is a Discord Application Command descriptor for a
  * slash command that targets a chat input.
  */
-export interface AppChatInputCommandSchema<T> {
+export interface AppChatInputCommandSchema<TBasicOption> {
   chatInput:
-    | (AppOptionsSchema<T> & AppChatInputSchemaBase)
-    | (AppSubcommandsSchema<T> & AppChatInputSchemaBase)
-    | (AppSubcommandGroupsSchema<T> & AppChatInputSchemaBase);
+    | (AppOptionsSchema<TBasicOption> & AppChatInputSchemaBase)
+    | (AppSubcommandsSchema<TBasicOption> & AppChatInputSchemaBase)
+    | (AppSubcommandGroupsSchema<TBasicOption> & AppChatInputSchemaBase);
 }
 
 /**
@@ -132,8 +130,8 @@ export type Promisable<T> = T | Promise<T>;
  * option type.
  */
 export type RuntimeTypeOf<
-  T extends AppChatInputBasicOption,
-> = T extends {
+  TBasicOption extends AppChatInputBasicOption,
+> = TBasicOption extends {
   type:
     | ApplicationCommandOptionType.String
     | ApplicationCommandOptionType.User
@@ -141,24 +139,26 @@ export type RuntimeTypeOf<
     | ApplicationCommandOptionType.Role
     | ApplicationCommandOptionType.Mentionable
     | ApplicationCommandOptionType.Attachment;
-} ? T extends { required: true } ? string : string | undefined
-  : T extends {
+} ? TBasicOption extends { required: true } ? string : string | undefined
+  : TBasicOption extends {
     type:
       | ApplicationCommandOptionType.Integer
       | ApplicationCommandOptionType.Number;
-  } ? T extends { required: true } ? number : number | undefined
-  : T extends { type: ApplicationCommandOptionType.Boolean }
-    ? T extends { required: true } ? boolean : boolean | undefined
+  } ? TBasicOption extends { required: true } ? number : number | undefined
+  : TBasicOption extends { type: ApplicationCommandOptionType.Boolean }
+    ? TBasicOption extends { required: true } ? boolean : boolean | undefined
   : never;
 
 /**
  * RuntimeTypeMapOf maps a schema option type to a runtime option type.
  */
 export type RuntimeTypeMapOf<
-  T extends AppOptionsSchema<AppChatInputBasicOption>,
-> = T extends
+  TAppOptionsSchema extends AppOptionsSchema<AppChatInputBasicOption>,
+> = TAppOptionsSchema extends
   Pick<Required<AppOptionsSchema<AppChatInputBasicOption>>, "options"> ? {
-    [optionName in keyof T["options"]]: RuntimeTypeOf<T["options"][optionName]>;
+    [optionName in keyof TAppOptionsSchema["options"]]: RuntimeTypeOf<
+      TAppOptionsSchema["options"][optionName]
+    >;
   }
   : undefined;
 
