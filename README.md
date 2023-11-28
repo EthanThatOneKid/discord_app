@@ -2,7 +2,11 @@
 
 [![deno doc](https://doc.deno.land/badge.svg)](https://deno.land/x/discord_app)
 
-Create Discord application commands.
+Define and serve Discord application commands.
+
+By leveraging TypeScript's type system, discord_app ensures type-safety in
+defining application commands, utilizing your schema to inject type information
+into your handlers.
 
 > Application commands are native ways to interact with apps in the Discord
 > client. There are 3 types of commands accessible in different interfaces: the
@@ -11,7 +15,7 @@ Create Discord application commands.
 
 ## Usage
 
-> **NOTE**
+> [!NOTE]
 >
 > The `discord_app` library is currently only known to be available in Deno.
 
@@ -21,12 +25,22 @@ Create Discord application commands.
 
 ### Message commands
 
+> Message commands are application commands that appear on the context menu
+> (right click or tap) of messages. They're a great way to surface quick actions
+> for your app that target messages. They don't take any arguments, and will
+> return the message on whom you clicked or tapped in the interaction response.
+
 In `discord_app`,
 [message commands](https://discord.com/developers/docs/interactions/application-commands#message-commands)
 are created and served as demonstrated in
 [`/examples/bookmark.ts`](./examples/bookmark.ts).
 
 ### User commands
+
+> User commands are application commands that appear on the context menu (right
+> click or tap) of users. They're a great way to surface quick actions for your
+> app that target users. They don't take any arguments, and will return the user
+> on whom you clicked or tapped in the interaction response.
 
 In `discord_app`,
 [user commands](https://discord.com/developers/docs/interactions/application-commands#user-commands)
