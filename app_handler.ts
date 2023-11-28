@@ -588,8 +588,11 @@ export async function createApp<TAppSchema extends AppSchema>(
 
       default: {
         // TODO: case InteractionType.MessageComponent
+        // https://discord.com/developers/docs/interactions/message-components#interaction-object-message-interaction-structure
         // TODO: case InteractionType.ApplicationCommandAutocomplete
+        // https://discord.com/developers/docs/interactions/application-commands#autocomplete
         // TODO: case InteractionType.ModalSubmit
+        // https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-object-modal-submit-data-structure
         return new Response("Unsupported interaction type", { status: 400 });
       }
     }

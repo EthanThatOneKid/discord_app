@@ -101,35 +101,38 @@ if (import.meta.main) {
   await load({ export: true });
 
   // Create the Discord application.
-  const handleInteraction = await createApp({
-    schema: permissions,
-    applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
-    publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
-    register: { token: Deno.env.get("DISCORD_TOKEN")! },
-    invite: { path: "/invite", scopes: ["applications.commands"] },
-  }, {
-    user: {
-      get(interaction) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: `Hello, <@${interaction.data.parsedOptions.user}>!`,
-          },
-        };
+  const handleInteraction = await createApp(
+    {
+      schema: permissions,
+      applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
+      publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
+      register: { token: Deno.env.get("DISCORD_TOKEN")! },
+      invite: { path: "/invite", scopes: ["applications.commands"] },
+    },
+    {
+      user: {
+        get(interaction) {
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: `Hello, <@${interaction.data.parsedOptions.user}>!`,
+            },
+          };
+        },
+        edit(_) {
+          throw new Error("Not implemented");
+        },
       },
-      edit(_) {
-        throw new Error("Not implemented");
+      role: {
+        get(_) {
+          throw new Error("Not implemented");
+        },
+        edit(_) {
+          throw new Error("Not implemented");
+        },
       },
     },
-    role: {
-      get(_) {
-        throw new Error("Not implemented");
-      },
-      edit(_) {
-        throw new Error("Not implemented");
-      },
-    },
-  });
+  );
 
   // Start the server.
   Deno.serve(handleInteraction);

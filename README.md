@@ -35,9 +35,27 @@ are created and served as demonstrated in
 
 ### Chat input commands
 
-In `discord_app`, chat input commands, also known as "slash commands", are
-created and served as demonstrated in
-[`/examples/permissions.ts`](./examples/permissions.ts).
+> For those developers looking to make more organized and complex groups of
+> commands, look no further than subcommands and groups.
+>
+> **Subcommands** organize your commands by **specifying actions within a
+> command or group**.
+>
+> **Subcommand Groups** organize your **subcommands** by **grouping subcommands
+> by similar action or resource within a command**.
+>
+> These are not enforced rules. You are free to use subcommands and groups
+> however you'd like; it's just how we think about them.
+
+In `discord_app`,
+[chat input commands](https://discord.com/developers/docs/interactions/application-commands#slash-commands),
+also known as "slash commands", are created and served as demonstrated in the
+following example files:
+
+- [`/examples/blep.ts`](./examples/blep.ts). This is a simple application with a
+  single command.
+- [`/examples/permissions.ts`](./examples/permissions.ts). This is application
+  is a set of grouped subcommands.
 
 ## Contributing
 
