@@ -5,8 +5,8 @@
 Define and serve Discord application commands.
 
 By leveraging TypeScript's type system, `discord_app` ensures type-safety in
-defining application commands, utilizing your schema to inject type information
-into your handlers.
+defining application commands, utilizing your application command schema to
+inject type information into your interaction handlers.
 
 > Application commands are native ways to interact with apps in the Discord
 > client. There are 3 types of commands accessible in different interfaces: the
