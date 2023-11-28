@@ -4,7 +4,7 @@
 
 Define and serve Discord application commands.
 
-By leveraging TypeScript's type system, discord_app ensures type-safety in
+By leveraging TypeScript's type system, `discord_app` ensures type-safety in
 defining application commands, utilizing your schema to inject type information
 into your handlers.
 
@@ -68,8 +68,8 @@ following example files:
 
 - [`/examples/blep.ts`](./examples/blep.ts). This is a simple application with a
   single command.
-- [`/examples/permissions.ts`](./examples/permissions.ts). This is application
-  is a set of grouped subcommands.
+- [`/examples/permissions.ts`](./examples/permissions.ts). This is a single
+  command with grouped subcommands.
 
 ## Contributing
 
