@@ -1,65 +1,284 @@
 # Special Discord Edition
 
-[![Open Source Software Team Special Discord Edition artwork for acmcsuf.com/special-discord-edition](https://github.com/EthanThatOneKid/acmcsuf.com/assets/31261035/d99ab5c2-73dd-4d4a-9ea6-ca74de353726)](https://docs.google.com/presentation/d/1IOaUTnV37v2ovIG2yx69CgK8dlXMgTIJt0tYYX_LEDE/edit?usp=sharing)
+[![Open Source Software team Special Discord Edition artwork for acmcsuf.com/special-discord-edition](https://github.com/EthanThatOneKid/acmcsuf.com/assets/31261035/d99ab5c2-73dd-4d4a-9ea6-ca74de353726)](https://docs.google.com/presentation/d/1IOaUTnV37v2ovIG2yx69CgK8dlXMgTIJt0tYYX_LEDE/edit?usp=sharing)
 
 Self link: <https://acmcsuf.com/special-discord-edition/>
 
-This blog post is a special edition of the mini-workshop series. This blog post is intended to be used as a reference for building projects that are using Discord API concepts.
+Last edited: Nov 29th, 2023
+
+This special edition of the mini-workshop series serves as a reference for
+building projects utilizing Discord API concepts. Designed as a handbook, this
+blog post is tailored to guide you in deploying your project to operate beyond a
+local environment, ensuring it remains functional even when your computer is
+offline.
+
+## Table of contents
+
+- [Discord API](#discord-api): An introduction to the Discord API.
+- [Questions to ask yourself](#questions-to-ask-yourself): Questions to ask
+  yourself to help you decide what you need to build your Discord project.
+- [Websocket server versus interaction server versus webhook](#websocket-server-versus-interaction-server-versus-webhook):
+  A table summarizing the differences between the three types of Discord
+  projects.
+- [Conclusion](#conclusion): A conclusion.
 
 ## Discord API
 
-The Discord API is the home of all possible Discord
-
 This section serves as an introduction to the Discord API.
 
-The features of a project determines whether or not implementing websocket-based connection is necessary.
-
-For the _Special Discord Edition_ blog post, we will go over three primary uses of the Discord API.
-
-> **NOTE**
+> [!NOTE]
 >
-> The content of this blog post is not meant to be comprehensive. Please reference Discord's official [API Reference](https://discord.com/developers/docs/reference) documentation.
+> The content of this blog post is not meant to be totally comprehensive. Please
+> reference Discord's official
+> [API Reference](https://discord.com/developers/docs/reference) documentation
+> for more information.
 
-- Discord interaction server
-- Discord websocket server
-- Discord webhook
+### Discord API concepts
 
-| Vocabulary                      | Definition                                                                                                                     |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Discord bot                     | An entity within Discord that is capable operating autonomously. A Discord bot has the same abilities of a human Discord user. |
-| Discord application command     | TBD                                                                                                                            |
-| Discord chat input application  | TBD                                                                                                                            |
-| Discord chat input autocomplete | TBD                                                                                                                            |
-| Discord message application     | TBD                                                                                                                            |
-| Discord user application        | TBD                                                                                                                            |
-| Discord webhook                 | TBD                                                                                                                            |
-| Discord modal                   | TBD                                                                                                                            |
-| Discord message component       | TBD                                                                                                                            |
+| Vocabulary                      | Official Discord API Reference URL                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Discord application command     | <https://discord.com/developers/docs/interactions/application-commands#application-commands>                  |
+| Discord chat input command      | <https://discord.com/developers/docs/interactions/application-commands#slash-commands>                        |
+| Discord chat input autocomplete | <https://discord.com/developers/docs/interactions/application-commands#autocomplete>                          |
+| Discord message command         | <https://discord.com/developers/docs/interactions/application-commands#message-commands>                      |
+| Discord user command            | <https://discord.com/developers/docs/interactions/application-commands#user-commands>                         |
+| Discord webhook                 | <https://discord.com/developers/docs/resources/webhook#webhook-resource>                                      |
+| Discord message component       | <https://discord.com/developers/docs/interactions/message-components>                                         |
+| Discord modal                   | <https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal> |
+| Discord grants                  | <https://discord.com/developers/docs/topics/oauth2#state-and-security>                                        |
 
-## Discord interaction server versus Discord bot versus Discord webhook
+#### Discord credentials
 
-| Discord project type       | Discord requirements                                 | Resource requirements                                                      |
-| -------------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------- |
-| Discord webhook            | Webhook URL                                          | Ability to send HTTP requests                                              |
-| Discord websocket server   | Application ID, public key, client secret, bot token | Ability to make websocket connection (traditional web server)              |
-| Discord interaction server | Application ID, public key, client secret, bot token | Ability to respond to HTTP requests (serverless or traditional web server) |
+In order to use the Discord API, you need to
+[**create a new Discord application**](https://discord.com/developers/applications)
+which contains the credentials necessary to authenticate your project with
+Discord.
 
-### Discord interaction server
+| Credential type | Keep safe | Description                                                                         |
+| --------------- | --------- | ----------------------------------------------------------------------------------- |
+| Client ID       | Public    | A.k.a application ID. Used to identify your application to Discord.                 |
+| Client secret   | Private   | Used to authenticate client ID.                                                     |
+| Public key      | Public    | Used to verify incoming Discord interactions.                                       |
+| Bot token       | Private   | Used to authenticate a Discord application bot, which represents an automated user. |
 
-A Discord interaction server is a web server that is capable of handling Discord interaction requests.
+#### Scopes, permissions, and intents
 
-> **NOTE**
+> [OAuth2 Scopes](https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes)
+> determine what data access and actions your app can take, granted on behalf of
+> an installing or authenticating user.
 >
-> Your Discord interaction server acts as a web server that handles Discord interaction requests. Your Discord interaction server is not a Discord bot.
+> [Permissions](https://discord.com/developers/docs/topics/permissions#permissions)
+> are the granular permissions for your bot user, the same as other users in
+> Discord have. They can be approved by the installing user or later updated
+> within server settings or with
+> [permission overwrites](https://discord.com/developers/docs/topics/permissions#permission-overwrites).
+>
+> Intents determine which events Discord will send your app when you're creating
+> a
+> [Gateway API connection](https://discord.com/developers/docs/topics/gateway).
+> For example, if you want your app to do something when users add a reaction to
+> a message, you can pass the `GUILD_MESSAGE_REACTIONS` (`1 << 10`) intent.
+>
+> Some intents are
+> [privileged](https://discord.com/developers/docs/topics/gateway#privileged-intents),
+> meaning they allow your app to access data that may be considered sensitive
+> (like the contents of messages). Privileged intents appear and can be toggled
+> on the Bot page in your app's settings. Standard, non-privileged intents don't
+> require any additional permissions or configurations. More information about
+> intents and a full list of available intents, along with their associated
+> events, is in the
+> [Gateway documentation](https://discord.com/developers/docs/topics/gateway#gateway-intents).
 
-Your project has a Discord interaction server if it needs to handle Discord interaction requests.
+Edit your application's invite URL to specify the scopes and permissions your
+application needs. See Discord's documentation on
+[creating an invite](https://discord.com/developers/docs/topics/oauth2#shared-resources-oauth2-scopes)
+for more information.
 
-#### Interaction request types
+From you Discord application's dashboard, you can build an invite URL with the
+scopes and permissions you need.
+
+[![Discord application dashboard OAuth2 URL generator screenshot](https://github.com/EthanThatOneKid/discord_app/assets/31261035/fe499311-a69e-4e64-b9b4-24f2e08e53fb.png)](https://discord.com/developers/applications)
+
+- From your
+  [Discord applications dashboard](https://discord.com/developers/applications),
+  click on your application.
+- Click on the "OAuth2" tab.
+- Under "OAuth2 URL Generator", select the permissions you need.
+- Copy the generated URL.
+
+Update the privileges of your application's bot to specify the intents your
+application needs **as needed**.
+
+[![Discord application dashboard intents screenshot](https://github.com/EthanThatOneKid/discord_app/assets/31261035/822804e3-e6a3-44cd-a0a7-e3b2dc3d7d1d.png)](https://discord.com/developers/applications)
+
+- From your
+  [Discord applications dashboard](https://discord.com/developers/applications),
+  click on your application.
+- Click on the "Bot" tab.
+- Under "Privileged Gateway Intents", select the intents you need.
+- Click on the "Save Changes" button.
+
+## Questions to ask yourself
+
+Decisions decisions decisions. Need a refresher to help you decide what you
+need? Here are some questions to ask yourself.
+
+### Does your project listen for real-time events on Discord?
+
+Examples of what real-time events are:
+
+- A user sends/edits/deletes a message in a channel.
+- A user reacts to a message in a channel.
+- A user joins/leaves a voice channel.
+
+Implications:
+
+- Your project needs to make a websocket connection to Discord.
+
+Special considerations:
+
+- Your project needs to be accessible via a URL. Deploy your project to a
+  hosting provider such as
+  [Fly.io](https://fly.io/docs/languages-and-frameworks/),
+  [Render](https://render.com/docs), etc.
+
+According to
+[Vercel's documentation](https://vercel.com/guides/can-i-deploy-discord-bots-to-vercel):
+
+> Discord Bots that require a server to be constantly listening and reacting to
+> events will not work on Vercel since
+> [Serverless Functions](https://vercel.com/docs/concepts/functions/serverless-functions)
+> have execution
+> [limits](https://vercel.com/docs/concepts/limits/overview#general-limits) that
+> range from 5 to 30 seconds depending on your plan. You can consider
+> alternative's like [Google Cloud Run](https://cloud.google.com/run/),
+> [Fly](https://fly.io/), [Render](https://render.com/), or
+> [Digital Ocean](https://www.digitalocean.com/) to host them instead.
+
+Library recommendations, listed without a specific order as of the last edit:
+
+- If you are using Go, I recommend
+  [Arikawa v3](https://pkg.go.dev/github.com/diamondburned/arikawa/v3)
+- If you are using Deno, I recommend
+  [Harmony](https://harmony.mod.land/guide/beginner/basic_bot.html).
+- There is a variety of Discord libraries that can help you make a websocket
+  connection to Discord. See
+  [Discord's official list of libraries](https://discord.com/developers/docs/topics/community-resources#libraries)
+  for more information.
+
+### Does your project respond to Discord interactions?
+
+Examples of what Discord interaction are:
+
+- A user uses an application command: user command, message command, or chat
+  input (a.k.a. slash) command.
+- A user uses a chat input command autocomplete.
+- A user uses a message component.
+- A user submits a modal.
+
+Discord interaction types:
 
 | Interaction type                   | Value |
 | ---------------------------------- | ----- |
-| `PING`                             | 1     |
+| `PING` (Discord heartbeat)         | 1     |
 | `APPLICATION_COMMAND`              | 2     |
 | `MESSAGE_COMPONENT`                | 3     |
 | `APPLICATION_COMMAND_AUTOCOMPLETE` | 4     |
 | `MODAL_SUBMIT`                     | 5     |
+
+Implications:
+
+- Your project needs to respond to HTTP requests. Your project can be a
+  serverless function or a traditional web server.
+
+Special considerations:
+
+- If your project is a serverless function, you need to make sure your
+  serverless function provider supports serverless functions that respond to
+  HTTP requests such as
+  [Vercel](https://vercel.com/docs/concepts/functions/serverless-functions),
+  [Deno Deploy](https://docs.deno.com/deploy/manual),
+  [Cloudflare Workers](https://developers.cloudflare.com/workers/get-started/guide/),
+  etc. See Discord's tutorial on
+  [Hosting a Reddit API Discord app on Cloudflare Workers](https://discord.com/developers/docs/tutorials/hosting-on-cloudflare-workers).
+- If your project is a traditional web server, you need to make sure your
+  traditional web server is accessible via a URL. Deploy your web server to a
+  hosting provider such as
+  [Fly.io](https://fly.io/docs/languages-and-frameworks/),
+  [Render](https://render.com/docs), etc.
+
+According to
+[Vercel's documentation](https://vercel.com/guides/can-i-deploy-discord-bots-to-vercel):
+
+> Discord Apps that use Webhooks to respond quickly to an HTTP request and
+> aren't invoked every second can be modelled effectively with Vercel's
+> Serverless Functions.
+
+Library recommendations, listed without a specific order as of the last edit:
+
+- Many popular Discord websocket libraries come with interaction server
+  capabilities. See
+  [Discord's official list of libraries](https://discord.com/developers/docs/topics/community-resources#libraries)
+  for more information.
+- I am currently building a Discord interaction server library for Deno.
+  `discord_app` leverages TypeScript's type system to ensure type-safety in
+  defining application commands, utilizing your application command schema to
+  inject type information into your interaction handlers. See
+  [deno.land/x/discord_app](https://deno.land/x/discord_app) for more
+  information.
+
+Relevant documentation as of the last edit:
+
+- <https://discord.com/developers/docs/tutorials/upgrading-to-application-commands#registering-commands>
+- <https://discord.com/developers/docs/getting-started>
+
+### Does your project send messages to a Discord channel?
+
+Discord webhook capabilities:
+
+- Send messages to a Discord channel with a custom username and avatar.
+
+Implications:
+
+- Your project needs to send HTTP requests. Your project can exist anywhere that
+  can send HTTP requests e.g. serverless function, traditional web server,
+  workflow script, etc.
+
+Relevant documentation as of the last edit:
+
+- <https://discord.com/developers/docs/resources/webhook#execute-webhook>
+
+### Does your project access Discord user data or allow users to login with Discord?
+
+Discord OAuth2 capabilities:
+
+- Access Discord user data.
+- Allow users to login with Discord.
+
+Implications:
+
+- Your project needs to send HTTP requests. Your project can exist anywhere that
+  can send HTTP requests e.g. serverless function, traditional web server,
+  workflow script, etc.
+- To log a user in with Discord, you need to redirect the user to Discord's
+  OAuth2 login page. This means your project needs to be accessible via a URL,
+  most likely a website. See
+  [Discord's State and Security documentation](https://discord.com/developers/docs/topics/oauth2#state-and-security)
+  for more information.
+
+## Websocket server versus interaction server versus webhook
+
+Here is a table summarizing the differences between the three types of Discord
+projects.
+
+| Discord project type       | Program requirements                                                                | Required information from Discord |
+| -------------------------- | ----------------------------------------------------------------------------------- | --------------------------------- |
+| Discord websocket server   | Ability to make websocket connection (traditional web server)                       | Application/Bot credentials       |
+| Discord interaction server | Ability to respond to HTTP requests (traditional web server or serverless function) | Application/Bot credentials       |
+| Discord webhook            | Ability to send HTTP requests                                                       | Webhook URL                       |
+
+## Conclusion
+
+I hope this blog post helped you decide what you need to build your Discord
+project. If you have any questions, feel free to reach out to me on Discord at
+`EthanThatOneKid`.
