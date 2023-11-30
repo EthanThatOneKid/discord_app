@@ -107,6 +107,8 @@ scopes and permissions you need.
 - Click on the "OAuth2" tab.
 - Under "OAuth2 URL Generator", select the permissions you need.
 - Copy the generated URL.
+- Paste the generated URL into your browser's address bar and invite the bot to
+  your server.
 
 Update the privileges of your application's bot to specify the intents your
 application needs **as needed**.
@@ -187,6 +189,14 @@ Discord interaction types:
 | `MESSAGE_COMPONENT`                | 3     |
 | `APPLICATION_COMMAND_AUTOCOMPLETE` | 4     |
 | `MODAL_SUBMIT`                     | 5     |
+
+The interaction type is included in the `type` field of the interaction object.
+
+```json
+{
+  "type": 2
+}
+```
 
 Implications:
 
@@ -272,8 +282,8 @@ Implications:
   can send HTTP requests e.g. serverless function, traditional web server,
   workflow script, etc.
 - To log a user in with Discord, you need to redirect the user to Discord's
-  OAuth2 login page. This means your project needs to be accessible via a URL,
-  most likely a website. See
+  OAuth2 login page. This means your project may need to be accessible via a
+  URL, most likely a website. See
   [Discord's State and Security documentation](https://discord.com/developers/docs/topics/oauth2#state-and-security)
   for more information.
 
@@ -287,6 +297,20 @@ projects.
 | Discord websocket server   | Ability to make websocket connection (traditional web server)                       | Application/Bot credentials       |
 | Discord interaction server | Ability to respond to HTTP requests (traditional web server or serverless function) | Application/Bot credentials       |
 | Discord webhook            | Ability to send HTTP requests                                                       | Webhook URL                       |
+
+## Is your project a Discord Activity?
+
+Discord Activity capabilities:
+
+- Multiple users join a Discord Activity to share media together and interact
+  with it in real time together.
+- Creative multi-user experiences that are not possible with a traditional
+  Discord bot e.g. MMO RPG adventure, shared drawing canvas, etc.
+
+Implications:
+
+- Your project must be built with Discord's official
+  [Game SDK](https://discord.com/developers/docs/game-sdk/sdk-starter-guide).
 
 ## Example projects
 
