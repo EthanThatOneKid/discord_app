@@ -218,6 +218,13 @@ According to
 
 Library recommendations, listed without a specific order as of the last edit:
 
+- A library is not necessary to build a Discord interaction server. You can
+  build a Discord interaction server with any web framework that supports
+  responding to HTTP requests. Tip: Use a library for helping you type-check
+  your project, such as
+  [discord_api_types](https://deno.land/x/discord_api_types) if you are using
+  TypeScript
+  ([example projects by @acmcsufoss](https://github.com/search?q=org%3Aacmcsufoss+%22from+%5C%22https%3A%2F%2Fdeno.land%2Fx%2Fdiscord_api_types%22&type=code)).
 - Many popular Discord websocket libraries come with interaction server
   capabilities. See
   [Discord's official list of libraries](https://discord.com/developers/docs/topics/community-resources#libraries)
@@ -298,3 +305,9 @@ We hope this blog post helped you decide what you need to build your Discord
 project. If you have any questions, feel free to reach out to Ethan on Discord
 at `EthanThatOneKid`. Written with 💜 by
 [**@acmcsufoss**](https://github.com/acmcsufoss).
+
+<!-- TODO: add more visuals like flowcharts or diagrams to illustrate the concepts
+being discussed such as a flowchart showing the process from creating a Discord
+application to deploying a Discord project to a hosting provider.
+TODO: Integrate additional advice on optimizing your Discord project for
+performance, common pitfalls, and security. -->
