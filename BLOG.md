@@ -234,7 +234,7 @@ Library recommendations, listed without a specific order as of the last edit:
   your project, such as
   [discord_api_types](https://deno.land/x/discord_api_types) if you are using
   TypeScript
-  ([example projects by @acmcsufoss](https://github.com/search?q=org%3Aacmcsufoss+%22from+%5C%22https%3A%2F%2Fdeno.land%2Fx%2Fdiscord_api_types%22&type=code)).
+  ([example projects by **@acmcsufoss**](https://github.com/search?q=org%3Aacmcsufoss+%22from+%5C%22https%3A%2F%2Fdeno.land%2Fx%2Fdiscord_api_types%22&type=code)).
 - Many popular Discord websocket libraries come with interaction server
   capabilities. See
   [Discord's official list of libraries](https://discord.com/developers/docs/topics/community-resources#libraries)
@@ -316,12 +316,13 @@ Implications:
 
 Here are some example projects to reference when building your Discord project.
 
-| Project name                                                     | Technologies used                | Description                                                                                                  |
-| ---------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [AoC-Dailies](https://github.com/tomasohCHOM/aoc-dailies#readme) | Deno, Discord webhook            | A cron job that sends a message to a Discord channel containing the current day's Advent of Code challenge.  |
-| [Shorter](https://github.com/acmcsufoss/shorter#readme)          | Deno, Discord chat input command | A Discord chat input command that shortens URLs for [acmcsuf.com](https://acmcsuf.com/).                     |
-| [Gitcord](https://github.com/ethanthatonekid/gitcord#readme)     | Go, Discord API, GitHub workflow | A program integrating GitHub issues and PRs into Discord threads, syncing comments and reviews in real-time. |
-| [TLDR](https://github.com/acmcsufoss/tldr#readme)                | Deno, Discord message command    | A Discord interaction server that allows users choose a message and generate a TL;DR summary.                |
+| Project name                                                     | Technologies used                             | Description                                                                                                  |
+| ---------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [AoC-Dailies](https://github.com/tomasohCHOM/aoc-dailies#readme) | Deno, Discord webhook                         | A cron job that sends a message to a Discord channel containing the current day's Advent of Code challenge.  |
+| [Shorter](https://github.com/acmcsufoss/shorter#readme)          | Deno, Discord chat input command              | A Discord chat input command that shortens URLs for [acmcsuf.com](https://acmcsuf.com/).                     |
+| [Gitcord](https://github.com/ethanthatonekid/gitcord#readme)     | Go, Discord API, GitHub workflow              | A program integrating GitHub issues and PRs into Discord threads, syncing comments and reviews in real-time. |
+| [TLDR](https://github.com/acmcsufoss/tldr#readme)                | Deno, Discord message command                 | A Discord interaction server that allows users choose a message and generate a TL;DR summary.                |
+| [Triggers](https://github.com/acmcsufoss/triggers#readme)        | Java, Discord bot, Discord chat input command | A command for custom chat triggers that notify users when a message matches.                                 |
 
 ## Conclusion
 
