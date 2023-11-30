@@ -20,6 +20,8 @@ offline.
 - [Websocket server versus interaction server versus webhook](#websocket-server-versus-interaction-server-versus-webhook):
   A table summarizing the differences between the three types of Discord
   projects.
+- [Example projects](#example-projects): Example projects to reference when
+  building your Discord project.
 - [Conclusion](#conclusion)
 
 ## Discord API
@@ -35,17 +37,17 @@ This section serves as an introduction to the Discord API.
 
 ### Discord API concepts
 
-| Vocabulary                      | Official Discord API Reference URL                                                                            |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| Discord application command     | <https://discord.com/developers/docs/interactions/application-commands#application-commands>                  |
-| Discord chat input command      | <https://discord.com/developers/docs/interactions/application-commands#slash-commands>                        |
-| Discord chat input autocomplete | <https://discord.com/developers/docs/interactions/application-commands#autocomplete>                          |
-| Discord message command         | <https://discord.com/developers/docs/interactions/application-commands#message-commands>                      |
-| Discord user command            | <https://discord.com/developers/docs/interactions/application-commands#user-commands>                         |
-| Discord webhook                 | <https://discord.com/developers/docs/resources/webhook#webhook-resource>                                      |
-| Discord message component       | <https://discord.com/developers/docs/interactions/message-components>                                         |
-| Discord modal                   | <https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal> |
-| Discord grants                  | <https://discord.com/developers/docs/topics/oauth2#state-and-security>                                        |
+| Vocabulary              | Official Discord API Reference URL                                                                            |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Application command     | <https://discord.com/developers/docs/interactions/application-commands#application-commands>                  |
+| Chat input command      | <https://discord.com/developers/docs/interactions/application-commands#slash-commands>                        |
+| Chat input autocomplete | <https://discord.com/developers/docs/interactions/application-commands#autocomplete>                          |
+| Message command         | <https://discord.com/developers/docs/interactions/application-commands#message-commands>                      |
+| User command            | <https://discord.com/developers/docs/interactions/application-commands#user-commands>                         |
+| Webhook                 | <https://discord.com/developers/docs/resources/webhook#webhook-resource>                                      |
+| Message component       | <https://discord.com/developers/docs/interactions/message-components>                                         |
+| Modal                   | <https://discord.com/developers/docs/interactions/receiving-and-responding#interaction-response-object-modal> |
+| Grants                  | <https://discord.com/developers/docs/topics/oauth2#state-and-security>                                        |
 
 #### Discord credentials
 
@@ -246,7 +248,9 @@ Implications:
 
 Relevant documentation as of the last edit:
 
+- [YouTube - How to get a Webhook URL on Discord](https://youtu.be/K8vgRWZnSZw)
 - <https://discord.com/developers/docs/resources/webhook#execute-webhook>
+- <https://birdie0.github.io/discord-webhooks-guide/index.html>
 
 ### Does your project access Discord user data or allow users to login with Discord?
 
@@ -277,8 +281,20 @@ projects.
 | Discord interaction server | Ability to respond to HTTP requests (traditional web server or serverless function) | Application/Bot credentials       |
 | Discord webhook            | Ability to send HTTP requests                                                       | Webhook URL                       |
 
+## Example projects
+
+Here are some example projects to reference when building your Discord project.
+
+| Project name                                                     | Technologies used                | Description                                                                                                  |
+| ---------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [AoC-Dailies](https://github.com/tomasohCHOM/aoc-dailies#readme) | Deno, Discord webhook            | A cron job that sends a message to a Discord channel containing the current day's Advent of Code challenge.  |
+| [Shorter](https://github.com/acmcsufoss/shorter#readme)          | Deno, Discord chat input command | A Discord chat input command that shortens URLs for [acmcsuf.com](https://acmcsuf.com/).                     |
+| [Gitcord](https://github.com/ethanthatonekid/gitcord#readme)     | Go, Discord API, GitHub workflow | A program integrating GitHub issues and PRs into Discord threads, syncing comments and reviews in real-time. |
+| [TLDR](https://github.com/acmcsufoss/tldr#readme)                | Deno, Discord message command    | A Discord interaction server that allows users choose a message and generate a TL;DR summary.                |
+
 ## Conclusion
 
-I hope this blog post helped you decide what you need to build your Discord
-project. If you have any questions, feel free to reach out to me on Discord at
-`EthanThatOneKid`.
+We hope this blog post helped you decide what you need to build your Discord
+project. If you have any questions, feel free to reach out to Ethan on Discord
+at `EthanThatOneKid`. Written with 💜 by
+[**@acmcsufoss**](https://github.com/acmcsufoss).
