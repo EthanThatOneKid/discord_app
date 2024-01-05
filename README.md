@@ -19,6 +19,32 @@ inject type information into your interaction handlers.
 >
 > The `discord_app` library is currently only known to be available in Deno.
 
+### Development
+
+When developing with the `discord_app` library, make sure to include all of the 
+necessary environmental variables from the Discord application into its designated 
+`.env` file.
+
+Next, prepare two terminal windows to run the following commands:
+
+**Terminal 1:**
+
+```bash
+deno task start
+```
+
+**Terminal 2:**
+
+```bash
+ngrok http [YOUR_PREFERRED_PORT]
+```
+
+The generated URL under **Forwarding** should be copied into the **Interactions 
+Endpoint URL** in the **General** tab of your Discord application. Find your 
+application [here](https://discord.com/developers/applications).
+
+**Note:** You will need to have Ngrok installed and in your path.
+
 ### Examples
 
 <!-- Examples are located in the generated library documentation. -->
