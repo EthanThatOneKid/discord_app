@@ -52,10 +52,22 @@ export type AppChatInputSchemaBase = Omit<
  * AppOptionsSchema is an option descriptor for a chat input command's options.
  */
 export interface AppOptionsSchema<TBasicOption> {
-  // TODO: Support type-safe choices.
   options?: {
     [optionName in string]: TBasicOption;
   };
+}
+
+/**
+ * AppChoicesSchema is an option descriptor for a slash command's choices.
+ *
+ * https://discord.com/developers/docs/interactions/application-commands#application-command-object-application-command-option-choice-structure
+ */
+export interface AppChoicesSchema // <TChoices extends { [choiceName: string]: string | number }>
+{
+  choices: // TChoices;
+    {
+      [choiceName: string]: string | number;
+    };
 }
 
 /**
@@ -65,7 +77,7 @@ export interface AppOptionsSchema<TBasicOption> {
 export interface AppSubcommandsSchema<TBasicOption> {
   subcommands: {
     [subcommandName: string]:
-      & AppOptionsSchema<TBasicOption>
+      & (AppOptionsSchema<TBasicOption> | AppChoicesSchema)
       & Omit<AppChatInputSchemaBase, "name">;
   };
 }
@@ -183,11 +195,18 @@ export type AppUserInteraction = APIApplicationCommandInteractionWrapper<
  * data based on the interaction's schema.
  */
 export type AppChatInputInteractionOf<
-  T extends AppOptionsSchema<AppChatInputBasicOption>,
+  T extends AppOptionsSchema<AppChatInputBasicOption> | AppChoicesSchema,
 > = APIApplicationCommandInteractionWrapper<
-  APIChatInputApplicationCommandInteractionData & {
-    parsedOptions: RuntimeTypeMapOf<T>;
-  }
+  & APIChatInputApplicationCommandInteractionData
+  & (T extends AppOptionsSchema<AppChatInputBasicOption> ? {
+      parsedOptions: RuntimeTypeMapOf<T>;
+    }
+    : T extends AppChoicesSchema ? {
+        parsedChoices: {
+          [choiceName in keyof T["choices"]]: T["choices"][choiceName];
+        };
+      }
+    : never)
 >;
 
 /**
