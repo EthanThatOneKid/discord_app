@@ -41,17 +41,26 @@ export function toAPIOptions(
       return;
     }
 
-    return Object.entries(schema.options).map(([name, option]) => ({
-      ...option,
-      type: option.type as number,
-      name,
-      choices: option.choices
-        ? Object.entries(option.choices).map(([name, value]) => ({
-          name,
-          value,
-        }))
-        : undefined,
-    }));
+    return Object.entries(schema.options).map(([name, schemaOption]) => {
+      const { choices: _, ...rest } = schemaOption;
+      const apiOption: APIApplicationCommandOption = {
+        ...rest,
+        type: schemaOption.type as number,
+        name,
+      };
+      if (
+        schemaOption.choices &&
+        (apiOption.type === ApplicationCommandOptionType.String ||
+          apiOption.type === ApplicationCommandOptionType.Integer ||
+          apiOption.type === ApplicationCommandOptionType.Number)
+      ) {
+        apiOption.choices = Object.entries(schemaOption.choices).map(
+          ([name, value]) => ({ name, value }),
+        );
+      }
+
+      return apiOption;
+    });
   }
 
   if ("subcommands" in schema) {
@@ -144,8 +153,12 @@ export function fromAPIChatInputOptions(
     for (const schemaOptionName in schema.options) {
       const schemaOption = schema.options[schemaOptionName];
       const option = (options ?? []).find((o) => o.name === schemaOptionName);
-      if (schemaOption.required && option === undefined) {
-        throw new Error(`Missing option ${schemaOptionName}`);
+      if (!option) {
+        if (schemaOption.required) {
+          throw new Error(`Missing option ${schemaOptionName}`);
+        }
+
+        continue;
       }
 
       if (schemaOption.type !== option?.type) {

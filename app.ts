@@ -106,7 +106,9 @@ export interface ParsedAppChatInputCommandOptions {
  * AppChatInputChoices is a utility type that represents the choices of a chat
  * input command.
  */
-export type AppChatInputChoices = Record<string, string | number>;
+export type AppChatInputChoices =
+  | Record<string, string>
+  | Record<string, number>;
 
 /**
  * AppChatInputBasicOption is a Discord Application Command descriptor for a
