@@ -23,7 +23,13 @@ inject type information into your interaction handlers.
 
 When developing with the `discord_app` library, make sure to include all of the 
 necessary environmental variables from the Discord application into its designated 
-`.env` file.
+`.env` file. Namely, those variables are:
+
+```
+DISCORD_APPLICATION_ID
+DISCORD_PUBLIC_KEY
+DISCORD_TOKEN
+```
 
 Next, prepare two terminal windows to run the following commands:
 
