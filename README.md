@@ -26,9 +26,9 @@ necessary environmental variables from the Discord application into its designat
 `.env` file. Namely, those variables are:
 
 ```
-DISCORD_APPLICATION_ID
-DISCORD_PUBLIC_KEY
-DISCORD_TOKEN
+DISCORD_APPLICATION_ID=""
+DISCORD_PUBLIC_KEY=""
+DISCORD_TOKEN=""
 ```
 
 Next, prepare two terminal windows to run the following commands:
