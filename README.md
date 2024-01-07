@@ -42,7 +42,7 @@ deno task start
 **Terminal 2:**
 
 ```bash
-ngrok http [YOUR_PREFERRED_PORT]
+ngrok http [YOUR_PORT]
 ```
 
 In **Terminal 2**, copy the URL that is generated under **Forwarding** 
