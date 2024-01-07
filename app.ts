@@ -52,7 +52,6 @@ export type AppChatInputSchemaBase = Omit<
  * AppOptionsSchema is an option descriptor for a chat input command's options.
  */
 export interface AppOptionsSchema<TBasicOption> {
-  // TODO: Support type-safe choices.
   options?: {
     [optionName in string]: TBasicOption;
   };
@@ -104,13 +103,32 @@ export interface ParsedAppChatInputCommandOptions {
 }
 
 /**
+ * AppChatInputChoices is a utility type that represents the choices of a chat
+ * input command.
+ */
+export type AppChatInputChoices =
+  | Record<string, string>
+  | Record<string, number>;
+
+/**
  * AppChatInputBasicOption is a Discord Application Command descriptor for a
  * slash command option that targets a chat input.
  */
-export type AppChatInputBasicOption = Omit<
-  APIApplicationCommandBasicOption,
-  "name"
->;
+export type AppChatInputBasicOption<
+  TOptionType extends ApplicationCommandOptionType =
+    ApplicationCommandOptionType,
+> =
+  & Omit<
+    APIApplicationCommandBasicOption,
+    "name"
+  >
+  & {
+    choices?: TOptionType extends
+      | ApplicationCommandOptionType.String
+      | ApplicationCommandOptionType.Integer
+      | ApplicationCommandOptionType.Number ? AppChatInputChoices
+      : undefined;
+  };
 
 /**
  * AppSchema is the configuration of a Discord Application Command.
@@ -131,15 +149,19 @@ export type Promisable<T> = T | Promise<T>;
  */
 export type RuntimeTypeOf<
   TBasicOption extends AppChatInputBasicOption,
-> = TBasicOption extends {
-  type:
-    | ApplicationCommandOptionType.String
-    | ApplicationCommandOptionType.User
-    | ApplicationCommandOptionType.Channel
-    | ApplicationCommandOptionType.Role
-    | ApplicationCommandOptionType.Mentionable
-    | ApplicationCommandOptionType.Attachment;
-} ? TBasicOption extends { required: true } ? string : string | undefined
+> = TBasicOption extends { choices?: AppChatInputChoices }
+  ? TBasicOption extends { required: true }
+    ? TBasicOption["choices"][keyof TBasicOption["choices"]]
+  : TBasicOption["choices"][keyof TBasicOption["choices"]] | undefined
+  : TBasicOption extends {
+    type:
+      | ApplicationCommandOptionType.String
+      | ApplicationCommandOptionType.User
+      | ApplicationCommandOptionType.Channel
+      | ApplicationCommandOptionType.Role
+      | ApplicationCommandOptionType.Mentionable
+      | ApplicationCommandOptionType.Attachment;
+  } ? TBasicOption extends { required: true } ? string : string | undefined
   : TBasicOption extends {
     type:
       | ApplicationCommandOptionType.Integer
@@ -185,9 +207,11 @@ export type AppUserInteraction = APIApplicationCommandInteractionWrapper<
 export type AppChatInputInteractionOf<
   T extends AppOptionsSchema<AppChatInputBasicOption>,
 > = APIApplicationCommandInteractionWrapper<
-  APIChatInputApplicationCommandInteractionData & {
-    parsedOptions: RuntimeTypeMapOf<T>;
-  }
+  & APIChatInputApplicationCommandInteractionData
+  & (T extends AppOptionsSchema<AppChatInputBasicOption> ? {
+      parsedOptions: RuntimeTypeMapOf<T>;
+    }
+    : never)
 >;
 
 /**
