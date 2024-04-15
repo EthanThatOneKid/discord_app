@@ -9,6 +9,7 @@ import type {
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from "./discord_api_types.ts";
 import { ApplicationCommandOptionType } from "./discord_api_types.ts";
+import type { Promisable } from "./promisable.ts";
 
 /**
  * AppUserCommandSchema is a Discord Application Command descriptor for a slash
@@ -137,11 +138,6 @@ export type AppSchema =
   | AppUserCommandSchema
   | AppMessageCommandSchema
   | AppChatInputCommandSchema<AppChatInputBasicOption>;
-
-/**
- * Promisable is a utility type that represents a type and itself wrapped in a promise.
- */
-export type Promisable<T> = T | Promise<T>;
 
 /**
  * RuntimeTypeOf is a utility type that maps a schema option type to a runtime

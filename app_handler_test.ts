@@ -1,4 +1,4 @@
-import { assertEquals } from "./developer_deps.ts";
+import { assertEquals } from "@std/assert";
 import type {
   APIInteractionResponse,
   RESTPostAPIApplicationCommandsJSONBody,
