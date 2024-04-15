@@ -46,7 +46,7 @@ if (import.meta.main) {
       invite: { path: "/invite", scopes: ["applications.commands"] },
     },
     (interaction) => {
-      const animal = interaction.data.parsedOptions.animal;
+      const animal = interaction.data.parsedOptions.animal; // "animal_dog" | "animal_cat" | "animal_penguin"
       const onlySmol = interaction.data.parsedOptions["only-smol"];
       const url = makePictureURL(animal, onlySmol);
       return {
