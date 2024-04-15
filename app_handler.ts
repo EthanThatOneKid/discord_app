@@ -11,6 +11,8 @@ import {
   InteractionResponseType,
   InteractionType,
 } from "./discord_api_types.ts";
+import type { DiscordAPIInterface } from "./discord_api.ts";
+import { DiscordAPI } from "./discord_api.ts";
 import type {
   App,
   AppChatInputBasicOption,
@@ -24,10 +26,8 @@ import type {
   AppSubcommandsSchema,
   AppUserInteraction,
   ParsedAppChatInputCommandOptions,
-  Promisable,
 } from "./app.ts";
-import type { DiscordAPIInterface } from "./discord_api.ts";
-import { DiscordAPI } from "./discord_api.ts";
+import type { Promisable } from "./promisable.ts";
 
 /**
  * toAPIOptions converts a schema's options to valid Discord Application Command

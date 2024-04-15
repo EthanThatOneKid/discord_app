@@ -1,10 +1,9 @@
-import { load } from "../developer_deps.ts";
-import type { AppSchema } from "../mod.ts";
+import type { AppSchema } from "discord_app/mod.ts";
 import {
   ApplicationCommandOptionType,
   createApp,
   InteractionResponseType,
-} from "../mod.ts";
+} from "discord_app/mod.ts";
 
 /**
  * permissions is a `discord_app` schema modeled after the example in the
@@ -97,9 +96,6 @@ export const permissions = {
 } as const satisfies AppSchema;
 
 if (import.meta.main) {
-  // Load environment variables from .env file.
-  await load({ export: true });
-
   // Create the Discord application.
   const handleInteraction = await createApp(
     {

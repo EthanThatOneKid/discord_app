@@ -11,10 +11,10 @@ export type {
   RESTPostAPIApplicationCommandsJSONBody,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
-} from "./deps.ts";
+} from "discord-api-types";
 export {
   ApplicationCommandOptionType,
   ApplicationCommandType,
   InteractionResponseType,
   InteractionType,
-} from "./deps.ts";
+} from "discord-api-types";
