@@ -5,10 +5,10 @@ import type {
   APIInteractionResponse,
   APIMessageApplicationCommandInteractionData,
   APIUserApplicationCommandInteractionData,
+  ApplicationCommandOptionType,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   RESTPostAPIContextMenuApplicationCommandsJSONBody,
 } from "./discord_api_types.ts";
-import { ApplicationCommandOptionType } from "./discord_api_types.ts";
 import type { Promisable } from "./promisable.ts";
 
 /**

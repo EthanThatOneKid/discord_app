@@ -9,7 +9,7 @@ export const DISCORD_API_URL = "https://discord.com/api/v10";
 /**
  * makeBotAuthorization makes the Authorization header for a bot.
  */
-export function makeBotAuthorization(botToken: string) {
+export function makeBotAuthorization(botToken: string): string {
   return botToken.startsWith("Bot ") ? botToken : `Bot ${botToken}`;
 }
 
@@ -20,7 +20,7 @@ export function makeRegisterCommandsURL(
   applicationID: string,
   guildID?: string,
   base = DISCORD_API_URL,
-) {
+): URL {
   return new URL(
     `${base}/applications/${applicationID}/commands${
       guildID !== undefined ? `/guilds/${guildID}` : ""

@@ -1,9 +1,9 @@
-import type { AppSchema } from "discord_app/mod.ts";
+import type { AppSchema } from "app/mod.ts";
 import {
   ApplicationCommandOptionType,
   createApp,
   InteractionResponseType,
-} from "discord_app/mod.ts";
+} from "app/mod.ts";
 
 /**
  * blep is a `discord_app` schema modeled after the example in the official

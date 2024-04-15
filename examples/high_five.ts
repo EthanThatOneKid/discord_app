@@ -1,5 +1,5 @@
-import type { AppSchema } from "discord_app/mod.ts";
-import { createApp, InteractionResponseType } from "discord_app/mod.ts";
+import type { AppSchema } from "app/mod.ts";
+import { createApp, InteractionResponseType } from "app/mod.ts";
 
 /**
  * highFive is a `discord_app` schema modeled after the example in the
