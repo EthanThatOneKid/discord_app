@@ -24,8 +24,8 @@ Add a new file named `main.ts` to the project directory. In this case, let's use
 `examples/high_five.ts` as a starting point.
 
 ```ts
-import type { AppSchema } from "app/mod.ts";
-import { createApp, InteractionResponseType } from "app/mod.ts";
+import type { AppSchema } from "@discord-applications/app";
+import { createApp, InteractionResponseType } from "@discord-applications/app";
 
 export const highFive = {
   user: { name: "High Five" },
