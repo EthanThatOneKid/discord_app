@@ -6,7 +6,7 @@ import {
 } from "app/mod.ts";
 
 /**
- * permissions is a `discord_app` schema modeled after the example in the
+ * permissions is a `@discord-applications/app` schema modeled after the example in the
  * official Discord API reference documentation.
  *
  * @see

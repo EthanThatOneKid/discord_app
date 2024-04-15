@@ -6,7 +6,7 @@ import {
 } from "app/mod.ts";
 
 /**
- * blep is a `discord_app` schema modeled after the example in the official
+ * blep is a `@discord-applications/app` schema modeled after the example in the official
  *
  * @see
  * https://discord.com/developers/docs/interactions/application-commands#making-a-global-command
