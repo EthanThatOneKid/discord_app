@@ -4,7 +4,7 @@
   "exports": "./mod.ts",
   "imports": {
     "@std/assert": "jsr:@std/assert@^0.222.1",
-    "discord-api-types": "https://esm.sh/discord-api-types@0.37.79/v10",
+    "discord-api-types": "npm:discord-api-types@0.37.79/v10",
     "tweetnacl": "npm:tweetnacl@^1.0.3",
     "app/": "./"
   }
