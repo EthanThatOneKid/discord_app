@@ -396,8 +396,6 @@ export interface AppHandlerOptions<T> {
    */
   errorBehavior?: AppHandlerErrorBehaviorOptions<APIInteractionResponse>;
 
-  // TODO: Document where applicationID and publicKey are being used.
-
   /**
    * applicationID is the ID of the application that owns the application command.
    * The application ID is the same as the client ID. The application ID is required
@@ -416,12 +414,6 @@ export interface AppHandlerOptions<T> {
    * api is the Discord API interface. Defaults to the real Discord API.
    */
   api?: DiscordAPIInterface;
-
-  /**
-   * clientSecret is the client secret of the application that owns the application
-   * command.
-   */
-  // clientSecret: string;
 }
 
 /**
@@ -430,8 +422,8 @@ export interface AppHandlerOptions<T> {
 const ERROR_INVALID_REQUEST = new Error("Invalid request");
 
 /**
- * createApp creates a registers a Discord application command and returns a
- * request handler that handles the command.
+ * createApp creates a Discord application command and returns an HTTP
+ * request handler function that handles the application interactions.
  */
 export async function createApp<TAppSchema extends AppSchema>(
   options: AppHandlerOptions<TAppSchema>,

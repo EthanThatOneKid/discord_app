@@ -2,10 +2,14 @@
 
 [![deno doc](https://doc.deno.land/badge.svg)](https://deno.land/x/discord_app)
 
-Define and serve Discord application commands.
+> [!IMPORTANT]
+>
+> `discord_app` is no longer kept up-to-date on deno.land/x. Please refer to
+> [`@discord-applications/app`](https://jsr.io/@discord-applications/app) for
+> the most up-to-date version.
 
 Leveraging TypeScript's powerful type system, `discord_app` ensures type-safety
-in defining application commands. `discord_app` infers the correct type
+in defining application commands. `discord_app` infers the relevant type
 information for each interaction handler based on the app schema.
 
 > Application commands are native ways to interact with apps in the Discord
@@ -17,18 +21,78 @@ information for each interaction handler based on the app schema.
 
 > [!NOTE]
 >
-> The `discord_app` library is currently only known to be available in Deno.
+> The `discord_app` library is currently only known to be available in
+> [Deno](https://deno.land/).
 
-### Development
+### Getting started
 
-When developing with the `discord_app` library, make sure to include all of the
-necessary environmental variables from the Discord application into its
+Start with a new [Deno](https://deno.land/) project.
+
+```sh
+deno init
+```
+
+Add a new file named `main.ts` to the project directory. In this case, let's use
+`examples/high_five.ts` as a starting point.
+
+```ts
+import type { AppSchema } from "app/mod.ts";
+import { createApp, InteractionResponseType } from "app/mod.ts";
+
+export const highFive = {
+  user: { name: "High Five" },
+} as const satisfies AppSchema;
+
+if (import.meta.main) {
+  // Create the Discord application.
+  const handleInteraction = await createApp(
+    {
+      schema: highFive,
+      applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
+      publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
+      register: { token: Deno.env.get("DISCORD_TOKEN")! },
+      invite: { path: "/invite", scopes: ["applications.commands"] },
+    },
+    (interaction) => {
+      const targetUser =
+        interaction.data.resolved.users[interaction.data.target_id];
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content:
+            `<@${interaction.member?.user.id}> high-fived <@${targetUser.id}>!`,
+        },
+      };
+    },
+  );
+
+  // Start the server.
+  Deno.serve(handleInteraction);
+}
+```
+
+Include environment variables from the
+[Discord application](https://discord.com/developers/applications) into its
 designated `.env` file. Namely, those variables are:
 
 ```
 DISCORD_APPLICATION_ID=""
 DISCORD_PUBLIC_KEY=""
 DISCORD_TOKEN=""
+```
+
+Install and set up [Ngrok](https://ngrok.com/) to expose the local server to
+Discord.
+
+Add the following tasks to your Deno configuration file.
+
+```json
+{
+  "tasks": {
+    "start": "deno run -A --env main.ts",
+    "ngrok": "ngrok http 8000"
+  }
+}
 ```
 
 Next, prepare two terminal windows to run the following commands:
@@ -39,10 +103,13 @@ Next, prepare two terminal windows to run the following commands:
 deno task start
 ```
 
+In **Terminal 1**, the server will start on port 8000. Visit
+<http://localhost:8000/invite> to invite the application to your server.
+
 **Terminal 2:**
 
 ```bash
-ngrok http [YOUR_PORT]
+deno task ngrok
 ```
 
 In **Terminal 2**, copy the URL that is generated under **Forwarding** (You will
