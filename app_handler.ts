@@ -11,7 +11,6 @@ import {
   InteractionResponseType,
   InteractionType,
 } from "./discord_api_types.ts";
-import type { DiscordAPIInterface } from "./discord_api.ts";
 import { DiscordAPI } from "./discord_api.ts";
 import type {
   App,
@@ -370,22 +369,6 @@ export interface AppHandlerOptions<T> {
   path?: string;
 
   /**
-   * register is the configuration of the application command registration. If
-   * not provided, the application command will not be registered.
-   */
-  register?: {
-    /**
-     * token is the token of the application command.
-     */
-    token: string;
-
-    /**
-     * guildID is the ID of the guild to register the application command in.
-     */
-    guildID?: string;
-  };
-
-  /**
    * invite is the configuration of the invite redirect. If not provided, the
    * invite endpoint will not be handled.
    */
@@ -411,6 +394,24 @@ export interface AppHandlerOptions<T> {
   publicKey: string;
 
   /**
+   * token is the token of the application command.
+   */
+  token: string;
+
+  /**
+   * guildID is the ID of the guild to register the application command in.
+   */
+  guildID?: string;
+
+  /**
+   * register is a flag that indicates whether to register the application command
+   * on startup. If true, the application command will be registered on startup.
+   *
+   * By default, register is false.
+   */
+  register?: boolean;
+
+  /**
    * api is the Discord API interface. Defaults to the real Discord API.
    */
   api?: DiscordAPIInterface;
@@ -421,6 +422,26 @@ export interface AppHandlerOptions<T> {
  */
 const ERROR_INVALID_REQUEST = new Error("Invalid request");
 
+function makeDiscordAPI(
+  applicationID: string | undefined,
+  publicKey: string | undefined,
+  token: string | undefined,
+): DiscordAPI {
+  if (applicationID === undefined) {
+    throw new Error("applicationID is required to register the command");
+  }
+
+  if (publicKey === undefined) {
+    throw new Error("publicKey is required to verify the request");
+  }
+
+  if (token === undefined) {
+    throw new Error("token is required to register the command");
+  }
+
+  return new DiscordAPI({ applicationID, publicKey, token });
+}
+
 /**
  * createApp creates a Discord application command and returns an HTTP
  * request handler function that handles the application interactions.
@@ -429,16 +450,14 @@ export async function createApp<TAppSchema extends AppSchema>(
   options: AppHandlerOptions<TAppSchema>,
   handlers: App<TAppSchema>,
 ): Promise<(r: Request) => Promise<Response>> {
-  const api = options.api ?? new DiscordAPI();
+  const api = options.api ??
+    makeDiscordAPI(
+      options.applicationID,
+      options.publicKey,
+      options.token,
+    );
   if (options.register) {
-    if (options.applicationID === undefined) {
-      throw new Error("applicationID is required to register the command");
-    }
-
     await api.registerApplicationCommand({
-      applicationID: options.applicationID,
-      guildID: options.register.guildID,
-      token: options.register.token,
       applicationCommand: toAPI(options.schema),
     });
   }
