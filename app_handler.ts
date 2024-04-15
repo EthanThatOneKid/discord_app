@@ -38,14 +38,29 @@ export function toAPIOptions(
 ): APIApplicationCommandOption[] | undefined {
   if ("options" in schema) {
     if (schema.options === undefined) {
-      return undefined;
+      return;
     }
 
-    return Object.entries(schema.options).map(([name, option]) => ({
-      ...option,
-      type: option.type as number,
-      name,
-    }));
+    return Object.entries(schema.options).map(([name, schemaOption]) => {
+      const { choices: _, ...rest } = schemaOption;
+      const apiOption: APIApplicationCommandOption = {
+        ...rest,
+        type: schemaOption.type as number,
+        name,
+      };
+      if (
+        schemaOption.choices &&
+        (apiOption.type === ApplicationCommandOptionType.String ||
+          apiOption.type === ApplicationCommandOptionType.Integer ||
+          apiOption.type === ApplicationCommandOptionType.Number)
+      ) {
+        apiOption.choices = Object.entries(schemaOption.choices).map(
+          ([name, value]) => ({ name, value }),
+        );
+      }
+
+      return apiOption;
+    });
   }
 
   if ("subcommands" in schema) {
@@ -134,32 +149,33 @@ export function fromAPIChatInputOptions(
       return {};
     }
 
-    // No options with schema options is invalid.
-    const schemaOptionNames = Object.keys(schema.options);
-    if (
-      (options === undefined || options.length === 0) &&
-      schemaOptionNames.length !== 0
-    ) {
-      throw new Error("Invalid options");
-    }
-
     // Options are validated against the schema.
-    for (const option of options!) {
-      if (!schemaOptionNames.includes(option.name)) {
-        throw new Error(`Unexpected option ${option.name}`);
+    for (const schemaOptionName in schema.options) {
+      const schemaOption = schema.options[schemaOptionName];
+      const option = (options ?? []).find((o) => o.name === schemaOptionName);
+      if (!option) {
+        if (schemaOption.required) {
+          throw new Error(`Missing option ${schemaOptionName}`);
+        }
+
+        continue;
       }
 
-      if (option.type !== schema.options[option.name].type) {
+      if (schemaOption.type !== option?.type) {
         throw new Error(
-          `Unexpected type ${option.type} for option ${option.name}`,
+          `Unexpected type ${option?.type} for option ${schemaOptionName}`,
         );
       }
-    }
 
-    for (const optionName of schemaOptionNames) {
-      const option = schema.options![optionName];
-      if (option.required && !options!.some((o) => o.name === optionName)) {
-        throw new Error(`Missing required option ${optionName}`);
+      if (schemaOption.choices && option?.value !== undefined) {
+        // Choice values may either be a string or number, but not a boolean.
+        const isValidChoice = typeof option.value !== "boolean" &&
+          Object.values(schemaOption.choices).includes(option.value);
+        if (!isValidChoice) {
+          throw new Error(
+            `Unexpected value ${option.value} for option ${schemaOptionName}`,
+          );
+        }
       }
     }
 

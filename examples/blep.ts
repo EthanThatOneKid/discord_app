@@ -20,12 +20,11 @@ export const blep = {
         type: ApplicationCommandOptionType.String,
         description: "The type of animal",
         required: true,
-        // TODO: Support type-safe choices.
-        // choices: [
-        //   { name: "Dog", value: "animal_dog" },
-        //   { name: "Cat", value: "animal_cat" },
-        //   { name: "Penguin", value: "animal_penguin" },
-        // ],
+        choices: {
+          "Dog": "animal_dog",
+          "Cat": "animal_cat",
+          "Penguin": "animal_penguin",
+        },
       },
       "only-smol": {
         type: ApplicationCommandOptionType.Boolean,
@@ -47,7 +46,7 @@ if (import.meta.main) {
       invite: { path: "/invite", scopes: ["applications.commands"] },
     },
     (interaction) => {
-      const animal = interaction.data.parsedOptions.animal;
+      const animal = interaction.data.parsedOptions.animal; // "animal_dog" | "animal_cat" | "animal_penguin"
       const onlySmol = interaction.data.parsedOptions["only-smol"];
       const url = makePictureURL(animal, onlySmol);
       return {
