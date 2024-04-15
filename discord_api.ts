@@ -1,4 +1,4 @@
-import { nacl } from "./deps.ts";
+import nacl from "tweetnacl";
 import type { RESTPostAPIApplicationCommandsJSONBody } from "./discord_api_types.ts";
 
 /**
