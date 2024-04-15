@@ -98,7 +98,10 @@
     "https://deno.land/x/discord_api_types@0.37.79/rpc/v10.ts": "fbaad9f3d73fce88e76b0e52ad5345093f18077e4293937c9ec0ee24415b9a93",
     "https://deno.land/x/discord_api_types@0.37.79/utils/internals.ts": "9a8b59a45efe216ad88d73036005babe17a475a470a80cbe5d4bba2f5bb7660e",
     "https://deno.land/x/discord_api_types@0.37.79/utils/v10.ts": "2bf6a001a02e9958d1da37df412c11b04cd6ae2a6df6cfbae6c051088c37474b",
-    "https://deno.land/x/discord_api_types@0.37.79/v10.ts": "f3f23492c59e77859aba5b34431edf3668c37f722d7f70c2e1ef7ba4bcda3010"
+    "https://deno.land/x/discord_api_types@0.37.79/v10.ts": "f3f23492c59e77859aba5b34431edf3668c37f722d7f70c2e1ef7ba4bcda3010",
+    "https://esm.sh/discord-api-types@0.37.79/v10": "7b9960405aaeb5c8b2dbf6854c8a52f3a23bc33eb2a71ecbdd9dd33904abea2d",
+    "https://esm.sh/v135/discord-api-types@0.37.79/denonext/globals.js": "3bd3a964ad036f4090bb671ae36ce6ec368061c6cabca90c5323b923b333cbca",
+    "https://esm.sh/v135/discord-api-types@0.37.79/denonext/v10.js": "ff305a10ebcee822b0505396a8a6d790d443fb1975bd6b216f2ca5f342f431c5"
   },
   "workspace": {
     "dependencies": [
