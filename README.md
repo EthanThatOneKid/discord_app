@@ -27,15 +27,15 @@ Add a new file named `main.ts` to the project directory. In this case, let's use
 import type { AppSchema } from "@discord-applications/app";
 import { createApp, InteractionResponseType } from "@discord-applications/app";
 
-export const highFive = {
+export const highFiveSchema = {
   user: { name: "High Five" },
 } as const satisfies AppSchema;
 
 if (import.meta.main) {
   // Create the Discord application.
-  const handleInteraction = await createApp(
+  const highFive = await createApp(
     {
-      schema: highFive,
+      schema: highFiveSchema,
       applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
       publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
       register: { token: Deno.env.get("DISCORD_TOKEN")! },
@@ -55,7 +55,7 @@ if (import.meta.main) {
   );
 
   // Start the server.
-  Deno.serve(handleInteraction);
+  Deno.serve(highFive);
 }
 ```
 

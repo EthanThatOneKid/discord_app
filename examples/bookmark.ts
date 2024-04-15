@@ -2,21 +2,21 @@ import type { AppSchema } from "app/mod.ts";
 import { createApp, InteractionResponseType } from "app/mod.ts";
 
 /**
- * bookmark is a `@discord-applications/app` schema modeled after the example in the
+ * bookmarkSchema is a `@discord-applications/app` schema modeled after the example in the
  * official Discord API reference documentation.
  *
  * @see
  * https://discord.com/developers/docs/interactions/application-commands#message-commands
  */
-export const bookmark = {
+export const bookmarkSchema = {
   message: { name: "bookmark" },
 } as const satisfies AppSchema;
 
 if (import.meta.main) {
   // Create the Discord application.
-  const handleInteraction = await createApp(
+  const bookmark = await createApp(
     {
-      schema: bookmark,
+      schema: bookmarkSchema,
       applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
       publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
       register: { token: Deno.env.get("DISCORD_TOKEN")! },
@@ -38,5 +38,5 @@ if (import.meta.main) {
   );
 
   // Start the server.
-  Deno.serve(handleInteraction);
+  Deno.serve(bookmark);
 }

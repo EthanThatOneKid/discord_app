@@ -6,12 +6,12 @@ import {
 } from "app/mod.ts";
 
 /**
- * blep is a `@discord-applications/app` schema modeled after the example in the official
+ * blepSchema is a `@discord-applications/app` schema modeled after the example in the official
  *
  * @see
  * https://discord.com/developers/docs/interactions/application-commands#making-a-global-command
  */
-export const blep = {
+export const blepSchema = {
   chatInput: {
     name: "blep",
     description: "Send a random adorable animal photo",
@@ -37,9 +37,9 @@ export const blep = {
 
 if (import.meta.main) {
   // Create the Discord application.
-  const handleInteraction = await createApp(
+  const blep = await createApp(
     {
-      schema: blep,
+      schema: blepSchema,
       applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
       publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
       register: { token: Deno.env.get("DISCORD_TOKEN")! },
@@ -57,7 +57,7 @@ if (import.meta.main) {
   );
 
   // Start the server.
-  Deno.serve(handleInteraction);
+  Deno.serve(blep);
 }
 
 function makePictureURL(animal: string, onlySmol?: boolean) {
