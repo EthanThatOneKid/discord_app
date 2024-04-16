@@ -42,8 +42,9 @@ if (import.meta.main) {
       schema: blepSchema,
       applicationID: Deno.env.get("DISCORD_APPLICATION_ID")!,
       publicKey: Deno.env.get("DISCORD_PUBLIC_KEY")!,
-      register: { token: Deno.env.get("DISCORD_TOKEN")! },
+      token: Deno.env.get("DISCORD_TOKEN")!,
       invite: { path: "/invite", scopes: ["applications.commands"] },
+      register: true,
     },
     (interaction) => {
       const animal = interaction.data.parsedOptions.animal; // "animal_dog" | "animal_cat" | "animal_penguin"

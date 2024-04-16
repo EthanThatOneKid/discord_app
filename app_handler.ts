@@ -11,7 +11,8 @@ import {
   InteractionResponseType,
   InteractionType,
 } from "./discord_api_types.ts";
-import { DiscordAPI } from "./discord_api.ts";
+import type { Credentials, InviteOptions } from "./discord_api.ts";
+import { DiscordAPI, makeInviteURL } from "./discord_api.ts";
 import type {
   App,
   AppChatInputBasicOption,
@@ -313,50 +314,29 @@ export async function withErrorBehavior<T>(
 /**
  * AppHandlerInviteOptions is the configuration of the invite redirect.
  */
-export interface AppHandlerInviteOptions {
+export interface AppHandlerInviteOptions extends InviteOptions {
   /**
    * path is the path to the application command invite endpoint. Includes
    * slash prefix.
    */
   path: string;
-
-  /**
-   * scopes is the list of OAuth2 scopes to request.
-   */
-  scopes?: string[];
-
-  /**
-   * permissions is the list of permissions to request.
-   */
-  permissions?: string[];
 }
 
 /**
- * makeInviteURL creates an invite URL for the application command.
+ * AppHandlerRegisterOptions is the configuration of the application command
+ * registration.
  */
-export function makeInviteURL(
-  clientID: string,
-  options: AppHandlerInviteOptions,
-): URL {
-  const inviteURL = new URL("https://discord.com/oauth2/authorize");
-  inviteURL.searchParams.set("client_id", clientID);
-  if (options.scopes !== undefined) {
-    inviteURL.searchParams.set("scope", options.scopes.join(" "));
-  }
-
-  if (options.permissions !== undefined) {
-    inviteURL.searchParams.set(
-      "permissions",
-      options.permissions.join(" "),
-    );
-  }
-  return inviteURL;
+export interface AppHandlerRegisterOptions {
+  /**
+   * guildID is the ID of the guild to register the application command in.
+   */
+  guildID?: string;
 }
 
 /**
  * AppHandlerOptions is the configuration of
  */
-export interface AppHandlerOptions<T> {
+export interface AppHandlerOptions<T> extends Credentials {
   /**
    * schema is the schema of the application command.
    */
@@ -380,41 +360,15 @@ export interface AppHandlerOptions<T> {
   errorBehavior?: AppHandlerErrorBehaviorOptions<APIInteractionResponse>;
 
   /**
-   * applicationID is the ID of the application that owns the application command.
-   * The application ID is the same as the client ID. The application ID is required
-   * in order to register the application command or to redirect to the invite
-   * endpoint.
+   * register is the configuration of the application command registration. If
+   * not provided, the application command will not be registered on app creation.
    */
-  applicationID?: string;
-
-  /**
-   * publicKey is the public key of the application command. The public key is
-   * required in order to verify the request.
-   */
-  publicKey: string;
-
-  /**
-   * token is the token of the application command.
-   */
-  token: string;
-
-  /**
-   * guildID is the ID of the guild to register the application command in.
-   */
-  guildID?: string;
-
-  /**
-   * register is a flag that indicates whether to register the application command
-   * on startup. If true, the application command will be registered on startup.
-   *
-   * By default, register is false.
-   */
-  register?: boolean;
+  register?: AppHandlerRegisterOptions | boolean;
 
   /**
    * api is the Discord API interface. Defaults to the real Discord API.
    */
-  api?: DiscordAPIInterface;
+  api?: DiscordAPI;
 }
 
 /**
@@ -459,6 +413,7 @@ export async function createApp<TAppSchema extends AppSchema>(
   if (options.register) {
     await api.registerApplicationCommand({
       applicationCommand: toAPI(options.schema),
+      guildID: options.register === true ? undefined : options.register.guildID,
     });
   }
 
@@ -483,10 +438,7 @@ export async function createApp<TAppSchema extends AppSchema>(
       }
     }
 
-    const { body, error } = await api.verify({
-      request,
-      publicKey: options.publicKey,
-    });
+    const { body, error } = await api.verify({ request });
     if (error) {
       return error;
     }

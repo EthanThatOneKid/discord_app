@@ -29,6 +29,43 @@ export function makeRegisterCommandsURL(
 }
 
 /**
+ * InviteOptions are the options for the invite URL.
+ */
+export interface InviteOptions {
+  /**
+   * scopes are the OAuth2 scopes.
+   */
+  scopes?: string[];
+
+  /**
+   * permissions are the permissions for the application command.
+   */
+  permissions?: string[];
+}
+
+/**
+ * makeInviteURL creates an invite URL for the application command.
+ */
+export function makeInviteURL(
+  clientID: string,
+  options: InviteOptions,
+): URL {
+  const inviteURL = new URL("https://discord.com/oauth2/authorize");
+  inviteURL.searchParams.set("client_id", clientID);
+  if (options.scopes !== undefined) {
+    inviteURL.searchParams.set("scope", options.scopes.join(" "));
+  }
+
+  if (options.permissions !== undefined) {
+    inviteURL.searchParams.set(
+      "permissions",
+      options.permissions.join(" "),
+    );
+  }
+  return inviteURL;
+}
+
+/**
  * RegisterApplicationCommandOptions are the options for registering a Discord
  * application command.
  */
@@ -170,8 +207,10 @@ export function makeEditOriginalInteractionResponseURL(
   clientID: string,
   interactionToken: string,
   base = DISCORD_API_URL,
-) {
-  return `${base}/webhooks/${clientID}/${interactionToken}/messages/@original`;
+): URL {
+  return new URL(
+    `${base}/webhooks/${clientID}/${interactionToken}/messages/@original`,
+  );
 }
 
 /**
