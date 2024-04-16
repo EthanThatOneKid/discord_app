@@ -14,5 +14,7 @@ jobs:
       - uses: denoland/setup-deno@v1
       - name: Lint
         run: deno lint
+      - name: Check
+        run: deno task check
       - name: Test
         run: deno test

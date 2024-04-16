@@ -29,6 +29,43 @@ export function makeRegisterCommandsURL(
 }
 
 /**
+ * InviteOptions are the options for the invite URL.
+ */
+export interface InviteOptions {
+  /**
+   * scopes are the OAuth2 scopes.
+   */
+  scopes?: string[];
+
+  /**
+   * permissions are the permissions for the application command.
+   */
+  permissions?: string[];
+}
+
+/**
+ * makeInviteURL creates an invite URL for the application command.
+ */
+export function makeInviteURL(
+  clientID: string,
+  options: InviteOptions,
+): URL {
+  const inviteURL = new URL("https://discord.com/oauth2/authorize");
+  inviteURL.searchParams.set("client_id", clientID);
+  if (options.scopes !== undefined) {
+    inviteURL.searchParams.set("scope", options.scopes.join(" "));
+  }
+
+  if (options.permissions !== undefined) {
+    inviteURL.searchParams.set(
+      "permissions",
+      options.permissions.join(" "),
+    );
+  }
+  return inviteURL;
+}
+
+/**
  * RegisterApplicationCommandOptions are the options for registering a Discord
  * application command.
  */
@@ -164,34 +201,135 @@ export async function verify(options: VerifyOptions): Promise<VerifiedRequest> {
 }
 
 /**
- * DiscordAPIInterface is the interface for the Discord API client.
+ * makeEditOriginalInteractionResponseURL makes the URL to edit the original interaction response.
  */
-export interface DiscordAPIInterface {
+export function makeEditOriginalInteractionResponseURL(
+  clientID: string,
+  interactionToken: string,
+  base = DISCORD_API_URL,
+): URL {
+  return new URL(
+    `${base}/webhooks/${clientID}/${interactionToken}/messages/@original`,
+  );
+}
+
+/**
+ * EditOriginalInteractionResponseOptions is the initialization to edit the original interaction response.
+ */
+export interface EditOriginalInteractionResponseOptions {
   /**
-   * registerApplicationCommand registers a Discord application command.
+   * applicationID is the ID of the Discord application.
    */
-  registerApplicationCommand(
-    options: RegisterApplicationCommandOptions,
-  ): Promise<void>;
+  applicationID: string;
 
   /**
-   * verify verifies whether the request is coming from Discord.
+   * token is the token of the Discord bot.
    */
-  verify(options: VerifyOptions): Promise<VerifiedRequest>;
+  token: string;
+
+  /**
+   * interactionToken is the interaction token.
+   */
+  interactionToken: string;
+
+  /**
+   * content is the content to edit.
+   */
+  content: string;
 }
+
+/**
+ * editOriginalInteractionResponse edits the original interaction response.
+ */
+export async function editOriginalInteractionResponse(
+  options: EditOriginalInteractionResponseOptions,
+): Promise<void> {
+  const url = makeEditOriginalInteractionResponseURL(
+    options.applicationID,
+    options.interactionToken,
+  );
+  const response = await fetch(url, {
+    method: "PATCH",
+    headers: new Headers([["Content-Type", "application/json"]]),
+    body: JSON.stringify({ content: options.content }),
+  });
+  if (!response.ok) {
+    throw new Error(
+      `Failed to edit original interaction response: ${response.status} ${response.statusText}`,
+    );
+  }
+}
+
+/**
+ * Credentials are the credentials for the Discord API.
+ */
+export interface Credentials {
+  /**
+   * applicationID is the ID of the Discord application.
+   */
+  applicationID: string;
+
+  /**
+   * token is the token of the Discord bot.
+   */
+  token: string;
+
+  /**
+   * publicKey is the public key of the Discord application.
+   */
+  publicKey: string;
+}
+
+/**
+ * OmitCredentials is a bag of options excluding the credentials.
+ */
+export type OmitCredentials<T> = Omit<T, keyof Credentials>;
 
 /**
  * DiscordAPI is the Discord API client.
  */
-export class DiscordAPI implements DiscordAPIInterface {
-  registerApplicationCommand(
-    options: RegisterApplicationCommandOptions,
+export class DiscordAPI {
+  public constructor(private readonly credentials?: Credentials) {}
+
+  public registerApplicationCommand(
+    options: OmitCredentials<RegisterApplicationCommandOptions>,
   ): Promise<void> {
-    return registerApplicationCommand(options);
+    if (this.credentials === undefined) {
+      throw new Error("Credentials are required");
+    }
+
+    return registerApplicationCommand({
+      applicationID: this.credentials.applicationID,
+      token: this.credentials.token,
+      ...options,
+    });
   }
 
-  verify(options: VerifyOptions): Promise<VerifiedRequest> {
-    return verify(options);
+  public verify(
+    options: OmitCredentials<VerifyOptions>,
+  ): Promise<VerifiedRequest> {
+    if (this.credentials === undefined) {
+      throw new Error("Credentials are required");
+    }
+
+    return verify({
+      publicKey: this.credentials.publicKey,
+      ...options,
+    });
+  }
+
+  public editOriginalInteractionResponse(
+    options: OmitCredentials<EditOriginalInteractionResponseOptions>,
+  ): Promise<void> {
+    if (this.credentials === undefined) {
+      throw new Error("Credentials are required");
+    }
+
+    return editOriginalInteractionResponse({
+      applicationID: this.credentials.applicationID,
+      token: this.credentials.token,
+      ...options,
+    });
   }
 }
 
